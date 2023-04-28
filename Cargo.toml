@@ -1,0 +1,12 @@
+[package]
+name = "bevy_generative"
+version = "0.1.0"
+license = "MIT"
+edition = "2021"
+
+# See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
+
+[dependencies]
+bevy = "0.10.1"
+image = "0.24.6"
+noise = "0.8.2"
