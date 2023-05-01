@@ -6,7 +6,7 @@ use bevy::{
 };
 use image::DynamicImage;
 
-use crate::noise::generate_noise;
+use crate::noise::generate_noise_by_method;
 
 /// Plugin to spawn a noise map to the center of the screen
 /// # Example
@@ -29,13 +29,47 @@ use crate::noise::generate_noise;
 
 pub struct NoiseMapPlugin;
 
-impl Plugin for NoiseMapPlugin {
-    fn build(&self, app: &mut App) {
-        app.add_startup_system(draw_map);
+pub enum Method {
+    OpenSimplex,
+    Perlin,
+    PerlinSurflet,
+    Simplex,
+    SuperSimplex,
+    Value,
+    Worley,
+}
+
+#[derive(Resource)]
+pub struct NoiseMapConfig {
+    pub size: [u16; 2],
+    pub seed: u32,
+    pub scale: f64,
+    pub method: Method,
+}
+
+impl Default for NoiseMapConfig {
+    fn default() -> Self {
+        Self {
+            size: [100; 2],
+            seed: 0,
+            scale: 0.04,
+            method: Method::Perlin,
+        }
     }
 }
 
-fn draw_map(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
+impl Plugin for NoiseMapPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<NoiseMapConfig>()
+            .add_startup_system(draw_map);
+    }
+}
+
+fn draw_map(
+    mut commands: Commands,
+    noise_map_config: Res<NoiseMapConfig>,
+    mut images: ResMut<Assets<Image>>,
+) {
     let handle = images.add(Image::new_fill(
         Extent3d {
             width: 100,
@@ -55,7 +89,12 @@ fn draw_map(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
         .expect("Texture format not supported")
         .to_rgb8();
 
-    let noise_space = generate_noise([100; 2]);
+    let noise_space = generate_noise_by_method(
+        &noise_map_config.method,
+        noise_map_config.size,
+        noise_map_config.seed,
+        noise_map_config.scale,
+    );
 
     for x in 0..image_buffer.width() {
         for y in 0..image_buffer.height() {
