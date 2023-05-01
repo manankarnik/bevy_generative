@@ -1,5 +1,21 @@
-//! Generate noise map using perlin noise
-
+//! Generate noise map. For configuration, see [NoiseMapConfig](./struct.NoiseMapConfig.html)
+//! # Example
+//! ```
+//! use bevy::prelude::*;
+//! use bevy_generative::noise_map::NoiseMapPlugin;
+//!
+//! fn main() {
+//!     App::new()
+//!         .add_plugins(DefaultPlugins)
+//!         .add_plugin(NoiseMapPlugin)
+//!         .add_startup_system(setup)
+//!         .run();
+//! }
+//!
+//! fn setup(mut commands: Commands) {
+//!     commands.spawn(Camera2dBundle::default());
+//! }
+//! ```
 use bevy::{
     prelude::*,
     render::render_resource::{Extent3d, TextureDimension, TextureFormat},
@@ -9,41 +25,56 @@ use image::DynamicImage;
 use crate::noise::generate_noise_by_method;
 
 /// Plugin to spawn a noise map to the center of the screen
+pub struct NoiseMapPlugin;
+
+/// 2 dimensional noise method used to generate noise map
+pub enum Method {
+    /// Open Simplex noise
+    OpenSimplex,
+    /// Perlin noise
+    Perlin,
+    /// Perlin Surflet noise
+    PerlinSurflet,
+    /// Simplex noise
+    Simplex,
+    /// Super Simplex noise
+    SuperSimplex,
+    /// Value noise
+    Value,
+    /// Worley noise
+    Worley,
+}
+
+/// Resource to configure noise map. Default values are used if the resource is not inserted.
 /// # Example
+/// Insert this resource in your bevy app like so:
 /// ```
 /// use bevy::prelude::*;
-/// use bevy_generative::noise_map::NoiseMapPlugin;
+/// use bevy_generative::noise_map::{Method, NoiseMapConfig, NoiseMapPlugin};
 ///
 /// fn main() {
 ///     App::new()
 ///         .add_plugins(DefaultPlugins)
 ///         .add_plugin(NoiseMapPlugin)
-///         .add_startup_system(setup)
+///         .insert_resource(NoiseMapConfig {
+///             method: Method::OpenSimplex,
+///             scale: 0.04,
+///             size: [100; 2],
+///             seed: 0,
+///         })
 ///         .run();
 /// }
-///
-/// fn setup(mut commands: Commands) {
-///     commands.spawn(Camera2dBundle::default());
-/// }
 /// ```
-
-pub struct NoiseMapPlugin;
-
-pub enum Method {
-    OpenSimplex,
-    Perlin,
-    PerlinSurflet,
-    Simplex,
-    SuperSimplex,
-    Value,
-    Worley,
-}
-
+/// PS: Remember to spawn a camera!
 #[derive(Resource)]
 pub struct NoiseMapConfig {
+    /// Size of the map
     pub size: [u16; 2],
+    /// Size of the generated noise map
     pub seed: u32,
+    /// Scale of the generated noise map
     pub scale: f64,
+    /// Method used to generate noise map
     pub method: Method,
 }
 
