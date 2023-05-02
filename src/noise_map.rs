@@ -27,6 +27,16 @@ use crate::noise::generate_noise_by_method;
 /// Plugin to spawn a noise map to the center of the screen
 pub struct NoiseMapPlugin;
 
+impl Plugin for NoiseMapPlugin {
+    fn build(&self, app: &mut App) {
+        app.init_resource::<NoiseMapConfig>().add_system(draw_map);
+    }
+}
+
+/// Marker component to query noise map
+#[derive(Component)]
+pub struct NoiseMap;
+
 /// 2 dimensional noise method used to generate noise map
 pub enum Method {
     /// Open Simplex noise
@@ -89,17 +99,10 @@ impl Default for NoiseMapConfig {
     }
 }
 
-impl Plugin for NoiseMapPlugin {
-    fn build(&self, app: &mut App) {
-        app.init_resource::<NoiseMapConfig>()
-            .add_startup_system(draw_map);
-    }
-}
-
 fn draw_map(
-    mut commands: Commands,
     noise_map_config: Res<NoiseMapConfig>,
     mut images: ResMut<Assets<Image>>,
+    query: Query<&UiImage, With<NoiseMap>>,
 ) {
     let handle = images.add(Image::new_fill(
         Extent3d {
@@ -134,38 +137,13 @@ fn draw_map(
         }
     }
 
-    let handle = images.set(
-        handle,
-        Image::from_dynamic(DynamicImage::ImageRgb8(image_buffer), true)
-            .convert(TextureFormat::Rgba8UnormSrgb)
-            .expect("Could not convert to Rgba8UnormSrgb"),
-    );
-
-    commands
-        .spawn(NodeBundle {
-            style: Style {
-                size: Size::all(Val::Percent(100.0)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                ..default()
-            },
-            ..default()
-        })
-        .with_children(|parent| {
-            parent.spawn(ImageBundle {
-                image: UiImage {
-                    texture: handle,
-                    ..default()
-                },
-                style: Style {
-                    size: Size {
-                        width: Val::Px(800.0),
-                        height: Val::Px(800.0),
-                    },
-                    margin: UiRect::all(Val::Px(20.0)),
-                    ..default()
-                },
-                ..default()
-            });
-        });
+    for ui_image in query.iter() {
+        let handle = &ui_image.texture;
+        images.set_untracked(
+            handle,
+            Image::from_dynamic(DynamicImage::ImageRgb8(image_buffer.clone()), true)
+                .convert(TextureFormat::Rgba8UnormSrgb)
+                .expect("Could not convert to Rgba8UnormSrgb"),
+        );
+    }
 }

@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_generative::noise_map::{Method, NoiseMapConfig, NoiseMapPlugin};
+use bevy_generative::noise_map::{Method, NoiseMap, NoiseMapConfig, NoiseMapPlugin};
 
 fn main() {
     App::new()
@@ -17,4 +17,5 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
+    commands.spawn((ImageBundle::default(), NoiseMap));
 }
