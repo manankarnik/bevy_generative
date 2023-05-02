@@ -4,11 +4,11 @@ use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Wo
 
 pub fn generate_noise_by_method(
     method: &Method,
-    size: [u16; 2],
+    size: [u32; 2],
     seed: u32,
     scale: f64,
 ) -> Vec<Vec<f64>> {
-    let generate_noise_by_method: fn([u16; 2], u32, f64) -> Vec<Vec<f64>> = match method {
+    let generate_noise_by_method: fn([u32; 2], u32, f64) -> Vec<Vec<f64>> = match method {
         Method::OpenSimplex => generate_noise::<OpenSimplex>,
         Method::Perlin => generate_noise::<Perlin>,
         Method::PerlinSurflet => generate_noise::<PerlinSurflet>,
@@ -20,7 +20,7 @@ pub fn generate_noise_by_method(
     generate_noise_by_method(size, seed, scale)
 }
 
-fn generate_noise<T>(size: [u16; 2], seed: u32, scale: f64) -> Vec<Vec<f64>>
+fn generate_noise<T>(size: [u32; 2], seed: u32, scale: f64) -> Vec<Vec<f64>>
 where
     T: Default + Seedable + NoiseFn<f64, 2>,
 {

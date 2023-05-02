@@ -79,7 +79,7 @@ pub enum Method {
 #[derive(Resource)]
 pub struct NoiseMapConfig {
     /// Size of the map
-    pub size: [u16; 2],
+    pub size: [u32; 2],
     /// Size of the generated noise map
     pub seed: u32,
     /// Scale of the generated noise map
@@ -102,12 +102,12 @@ impl Default for NoiseMapConfig {
 fn draw_map(
     noise_map_config: Res<NoiseMapConfig>,
     mut images: ResMut<Assets<Image>>,
-    query: Query<&UiImage, With<NoiseMap>>,
+    mut query: Query<(&mut UiImage, &mut Style), With<NoiseMap>>,
 ) {
     let handle = images.add(Image::new_fill(
         Extent3d {
-            width: 100,
-            height: 100,
+            width: noise_map_config.size[0],
+            height: noise_map_config.size[1],
             ..default()
         },
         TextureDimension::D2,
@@ -130,20 +130,24 @@ fn draw_map(
         noise_map_config.scale,
     );
 
-    for x in 0..image_buffer.width() {
-        for y in 0..image_buffer.height() {
+    for x in 0..noise_map_config.size[0] {
+        for y in 0..noise_map_config.size[1] {
             let color = noise_space[x as usize][y as usize].mul_add(255.0, -1.0) as u8;
             image_buffer.put_pixel(x, y, image::Rgb([color; 3]));
         }
     }
 
-    for ui_image in query.iter() {
-        let handle = &ui_image.texture;
-        images.set_untracked(
-            handle,
-            Image::from_dynamic(DynamicImage::ImageRgb8(image_buffer.clone()), true)
-                .convert(TextureFormat::Rgba8UnormSrgb)
-                .expect("Could not convert to Rgba8UnormSrgb"),
-        );
+    let handle = images.add(
+        Image::from_dynamic(DynamicImage::ImageRgb8(image_buffer.clone()), true)
+            .convert(TextureFormat::Rgba8UnormSrgb)
+            .expect("Could not convert to Rgba8UnormSrgb"),
+    );
+
+    for (mut ui_image, mut style) in query.iter_mut() {
+        ui_image.texture = handle.clone();
+        style.size = Size {
+            width: Val::Px(noise_map_config.size[0] as f32),
+            height: Val::Px(noise_map_config.size[1] as f32),
+        };
     }
 }
