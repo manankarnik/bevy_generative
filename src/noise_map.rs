@@ -20,7 +20,7 @@
 //! ```
 use bevy::{prelude::*, render::render_resource::TextureFormat};
 
-use crate::noise::generate_noise_by_method;
+use crate::noise::generate_noise_map;
 
 /// Plugin to generate noise map
 pub struct NoiseMapPlugin;
@@ -40,6 +40,8 @@ pub struct NoiseMap {
     pub seed: u32,
     /// Scale of the generated noise map
     pub scale: f64,
+    /// Offset of the generated noise map
+    pub offset: [i32; 2],
     /// Method used to generate noise map
     pub method: Method,
 }
@@ -50,6 +52,7 @@ impl Default for NoiseMap {
             size: [100; 2],
             seed: 0,
             scale: 0.04,
+            offset: [0; 2],
             method: Method::Perlin,
         }
     }
@@ -79,12 +82,7 @@ fn generate_map(
 ) {
     for (mut ui_image, mut style, noise_map) in query.iter_mut() {
         let mut image_buffer = image::RgbImage::new(noise_map.size[0], noise_map.size[1]);
-        let noise_space = generate_noise_by_method(
-            &noise_map.method,
-            noise_map.size,
-            noise_map.seed,
-            noise_map.scale,
-        );
+        let noise_space = generate_noise_map(noise_map);
         for x in 0..image_buffer.width() {
             for y in 0..image_buffer.height() {
                 let color = noise_space[x as usize][y as usize].mul_add(255.0, -1.0) as u8;
