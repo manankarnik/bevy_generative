@@ -1,5 +1,5 @@
 use bevy::prelude::*;
-use bevy_generative::noise_map::{Method, NoiseMap, NoiseMapPlugin};
+use bevy_generative::noise_map::{Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin};
 
 fn main() {
     App::new()
@@ -12,16 +12,21 @@ fn main() {
 
 fn setup(mut commands: Commands) {
     commands.spawn(Camera2dBundle::default());
-    commands.spawn((
-        ImageBundle::default(),
-        NoiseMap {
+    commands.spawn(NoiseMapBundle {
+        noise_map: NoiseMap {
             method: Method::OpenSimplex,
             scale: 0.04,
             size: [400; 2],
             seed: 0,
             offset: [0; 2],
+            position: UiRect {
+                left: Val::Percent(50.0),
+                top: Val::Percent(50.0),
+                ..default()
+            },
         },
-    ));
+        ..default()
+    });
 }
 
 fn offset_map(mut query: Query<&mut NoiseMap>) {

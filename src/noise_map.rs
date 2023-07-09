@@ -31,19 +31,31 @@ impl Plugin for NoiseMapPlugin {
     }
 }
 
-/// Marker component to query noise map
+/// Component for noise map configuration
 #[derive(Component)]
 pub struct NoiseMap {
-    /// Size of the map
+    /// Size of the noise map
     pub size: [u32; 2],
-    /// Seed of the generated noise map
+    /// Seed of the noise map
     pub seed: u32,
-    /// Scale of the generated noise map
+    /// Scale of the noise map
     pub scale: f64,
-    /// Offset of the generated noise map
+    /// Offset of the noise map
     pub offset: [i32; 2],
-    /// Method used to generate noise map
+    /// Method used to noise map
     pub method: Method,
+    /// Position of the noise map
+    pub position: UiRect,
+}
+
+/// Display NoiseMap as a ui node
+#[derive(Bundle)]
+pub struct NoiseMapBundle {
+    /// See [`NoiseMap`](./struct.NoiseMap.html)
+    pub noise_map: NoiseMap,
+    /// See [`ImageBundle`](../../bevy/prelude/struct.ImageBundle.html)
+    #[bundle]
+    pub image_bundle: ImageBundle,
 }
 
 impl Default for NoiseMap {
@@ -54,6 +66,16 @@ impl Default for NoiseMap {
             scale: 0.04,
             offset: [0; 2],
             method: Method::Perlin,
+            position: UiRect::default(),
+        }
+    }
+}
+
+impl Default for NoiseMapBundle {
+    fn default() -> Self {
+        Self {
+            noise_map: NoiseMap::default(),
+            image_bundle: ImageBundle::default(),
         }
     }
 }
@@ -98,5 +120,6 @@ fn generate_map(
             width: Val::Px(noise_map.size[0] as f32),
             height: Val::Px(noise_map.size[1] as f32),
         };
+        style.position = noise_map.position;
     }
 }
