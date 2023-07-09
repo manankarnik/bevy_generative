@@ -48,8 +48,8 @@ pub struct NoiseMap {
     pub position: UiRect,
 }
 
-/// Display NoiseMap as a ui node
-#[derive(Bundle)]
+/// Display `NoiseMap` as a ui node
+#[derive(Bundle, Default)]
 pub struct NoiseMapBundle {
     /// See [`NoiseMap`](./struct.NoiseMap.html)
     pub noise_map: NoiseMap,
@@ -67,15 +67,6 @@ impl Default for NoiseMap {
             offset: [0; 2],
             method: Method::Perlin,
             position: UiRect::default(),
-        }
-    }
-}
-
-impl Default for NoiseMapBundle {
-    fn default() -> Self {
-        Self {
-            noise_map: NoiseMap::default(),
-            image_bundle: ImageBundle::default(),
         }
     }
 }
