@@ -18,7 +18,10 @@
 //!     commands.spawn((ImageBundle::default(), NoiseMap::default()));
 //! }
 //! ```
-use bevy::{prelude::*, render::render_resource::TextureFormat};
+use bevy::{
+    prelude::*,
+    render::{render_resource::TextureFormat, texture::ImageSampler},
+};
 
 use crate::noise::generate_noise_map;
 
@@ -29,6 +32,16 @@ impl Plugin for NoiseMapPlugin {
     fn build(&self, app: &mut App) {
         app.add_system(generate_map);
     }
+}
+
+/// Region based on height of map
+pub struct Region {
+    /// Description of region
+    pub label: String,
+    /// Height value of region
+    pub height: f64,
+    /// Color representing region
+    pub color: Color,
 }
 
 /// Component for noise map configuration
@@ -44,8 +57,8 @@ pub struct NoiseMap {
     pub offset: [i32; 2],
     /// Method used to noise map
     pub method: Method,
-    /// Position of the noise map
-    pub position: UiRect,
+    /// Vector of regions in noise map
+    pub regions: Vec<Region>,
 }
 
 /// Display `NoiseMap` as a ui node
@@ -66,7 +79,48 @@ impl Default for NoiseMap {
             scale: 0.04,
             offset: [0; 2],
             method: Method::Perlin,
-            position: UiRect::default(),
+            regions: vec![
+                Region {
+                    label: "Water Deep".to_string(),
+                    color: Color::hex("#183D87").unwrap(),
+                    height: 47.0,
+                },
+                Region {
+                    label: "Water Shallow".to_string(),
+                    color: Color::hex("#34A6ED").unwrap(),
+                    height: 55.0,
+                },
+                Region {
+                    label: "Sand".to_string(),
+                    color: Color::hex("#F2F1C7").unwrap(),
+                    height: 58.0,
+                },
+                Region {
+                    label: "Grass".to_string(),
+                    color: Color::hex("#9FEB91").unwrap(),
+                    height: 64.0,
+                },
+                Region {
+                    label: "Forest".to_string(),
+                    color: Color::hex("#137D38").unwrap(),
+                    height: 70.0,
+                },
+                Region {
+                    label: "Plateau".to_string(),
+                    color: Color::hex("#614126").unwrap(),
+                    height: 80.0,
+                },
+                Region {
+                    label: "Mountain".to_string(),
+                    color: Color::hex("#361E0B").unwrap(),
+                    height: 90.0,
+                },
+                Region {
+                    label: "Snow".to_string(),
+                    color: Color::hex("#FFFFFF").unwrap(),
+                    height: 100.0,
+                },
+            ],
         }
     }
 }
@@ -89,28 +143,35 @@ pub enum Method {
     Worley,
 }
 
-fn generate_map(
-    mut images: ResMut<Assets<Image>>,
-    mut query: Query<(&mut UiImage, &mut Style, &NoiseMap)>,
-) {
-    for (mut ui_image, mut style, noise_map) in query.iter_mut() {
+fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImage, &NoiseMap)>) {
+    for (mut ui_image, noise_map) in query.iter_mut() {
         let mut image_buffer = image::RgbImage::new(noise_map.size[0], noise_map.size[1]);
         let noise_space = generate_noise_map(noise_map);
         for x in 0..image_buffer.width() {
             for y in 0..image_buffer.height() {
-                let color = noise_space[x as usize][y as usize].mul_add(255.0, -1.0) as u8;
-                image_buffer.put_pixel(x, y, image::Rgb([color; 3]));
+                for region in &noise_map.regions {
+                    if noise_space[x as usize][y as usize].clamp(-1.7, 1.7)
+                        <= -1.7 + (region.height / 100.0) * (1.7 - (-1.7))
+                    {
+                        let color = region.color;
+                        image_buffer.put_pixel(
+                            x,
+                            y,
+                            image::Rgb([
+                                (color.r() * 255.0) as u8,
+                                (color.g() * 255.0) as u8,
+                                (color.b() * 255.0) as u8,
+                            ]),
+                        );
+                        break;
+                    }
+                }
             }
         }
-        ui_image.texture = images.add(
-            Image::from_dynamic(image_buffer.into(), true)
-                .convert(TextureFormat::Rgba8UnormSrgb)
-                .expect("Could not convert to Rgba8UnormSrgb"),
-        );
-        style.size = Size {
-            width: Val::Px(noise_map.size[0] as f32),
-            height: Val::Px(noise_map.size[1] as f32),
-        };
-        style.position = noise_map.position;
+        let mut noise_map_texture = Image::from_dynamic(image_buffer.into(), true)
+            .convert(TextureFormat::Rgba8UnormSrgb)
+            .expect("Could not convert to Rgba8UnormSrgb");
+        noise_map_texture.sampler_descriptor = ImageSampler::nearest();
+        ui_image.texture = images.add(noise_map_texture);
     }
 }

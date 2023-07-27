@@ -1,17 +1,18 @@
 use crate::noise_map::{Method, NoiseMap};
+use bevy::log::info;
+use noise::{Fbm, OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
 use noise::{NoiseFn, Seedable};
-use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
 
 pub fn generate_noise_map(noise_map: &NoiseMap) -> Vec<Vec<f64>> {
     let generate_noise_map: fn([u32; 2], u32, f64, [i32; 2]) -> Vec<Vec<f64>> =
         match noise_map.method {
-            Method::OpenSimplex => generate_noise::<OpenSimplex>,
-            Method::Perlin => generate_noise::<Perlin>,
-            Method::PerlinSurflet => generate_noise::<PerlinSurflet>,
-            Method::Simplex => generate_noise::<Simplex>,
-            Method::SuperSimplex => generate_noise::<SuperSimplex>,
-            Method::Value => generate_noise::<Value>,
-            Method::Worley => generate_noise::<Worley>,
+            Method::OpenSimplex => generate_noise::<Fbm<OpenSimplex>>,
+            Method::Perlin => generate_noise::<Fbm<Perlin>>,
+            Method::PerlinSurflet => generate_noise::<Fbm<PerlinSurflet>>,
+            Method::Simplex => generate_noise::<Fbm<Simplex>>,
+            Method::SuperSimplex => generate_noise::<Fbm<SuperSimplex>>,
+            Method::Value => generate_noise::<Fbm<Value>>,
+            Method::Worley => generate_noise::<Fbm<Worley>>,
         };
     generate_noise_map(
         noise_map.size,
