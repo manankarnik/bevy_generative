@@ -1,5 +1,4 @@
 use crate::noise_map::{Method, NoiseMap};
-use bevy::log::info;
 use noise::{Fbm, OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
 use noise::{NoiseFn, Seedable};
 

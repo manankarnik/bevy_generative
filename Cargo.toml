@@ -9,4 +9,4 @@ edition = "2021"
 [dependencies]
 bevy = "0.10.1"
 image = "0.24.6"
-noise = "0.8.2"
+noise = { git = "https://github.com/Razaekel/noise-rs.git" }

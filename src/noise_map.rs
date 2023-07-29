@@ -150,8 +150,8 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImag
         for x in 0..image_buffer.width() {
             for y in 0..image_buffer.height() {
                 for region in &noise_map.regions {
-                    if noise_space[x as usize][y as usize].clamp(-1.7, 1.7)
-                        <= -1.7 + (region.height / 100.0) * (1.7 - (-1.7))
+                    if noise_space[x as usize][y as usize]
+                        <= -1.0 + (region.height / 100.0) * (1.0 - (-1.0))
                     {
                         let color = region.color;
                         image_buffer.put_pixel(
