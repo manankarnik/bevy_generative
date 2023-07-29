@@ -1,5 +1,7 @@
 use bevy::prelude::*;
-use bevy_generative::noise_map::{Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin};
+use bevy_generative::noise_map::{
+    Function, FunctionName, Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin, Region,
+};
 
 fn main() {
     App::new()
@@ -26,10 +28,15 @@ fn setup(mut commands: Commands) {
             parent.spawn(NoiseMapBundle {
                 noise_map: NoiseMap {
                     method: Method::Perlin,
-                    scale: 0.01,
+                    scale: 0.05,
                     size: [200; 2],
-                    seed: 0,
-                    offset: [0; 2],
+                    function: Some(Function {
+                        name: FunctionName::Billow,
+                        octaves: 6,
+                        frequency: 2.0,
+                        lacunarity: 0.3,
+                        persistence: 0.6,
+                    }),
                     ..default()
                 },
                 image_bundle: ImageBundle {

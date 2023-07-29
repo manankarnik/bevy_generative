@@ -57,6 +57,8 @@ pub struct NoiseMap {
     pub offset: [i32; 2],
     /// Method used to generate noise map
     pub method: Method,
+    /// Function used to generate noise map
+    pub function: Option<Function>,
     /// Vector of regions in noise map
     pub regions: Vec<Region>,
 }
@@ -79,45 +81,21 @@ impl Default for NoiseMap {
             scale: 0.04,
             offset: [0; 2],
             method: Method::Perlin,
+            function: None,
             regions: vec![
                 Region {
-                    label: "Water Deep".to_string(),
+                    label: "Water".to_string(),
                     color: Color::hex("#183D87").unwrap(),
                     height: 47.0,
                 },
                 Region {
-                    label: "Water Shallow".to_string(),
-                    color: Color::hex("#34A6ED").unwrap(),
-                    height: 55.0,
-                },
-                Region {
                     label: "Sand".to_string(),
                     color: Color::hex("#F2F1C7").unwrap(),
-                    height: 58.0,
-                },
-                Region {
-                    label: "Grass".to_string(),
-                    color: Color::hex("#9FEB91").unwrap(),
-                    height: 64.0,
+                    height: 50.0,
                 },
                 Region {
                     label: "Forest".to_string(),
                     color: Color::hex("#137D38").unwrap(),
-                    height: 70.0,
-                },
-                Region {
-                    label: "Plateau".to_string(),
-                    color: Color::hex("#614126").unwrap(),
-                    height: 80.0,
-                },
-                Region {
-                    label: "Mountain".to_string(),
-                    color: Color::hex("#361E0B").unwrap(),
-                    height: 90.0,
-                },
-                Region {
-                    label: "Snow".to_string(),
-                    color: Color::hex("#FFFFFF").unwrap(),
                     height: 100.0,
                 },
             ],
@@ -141,6 +119,30 @@ pub enum Method {
     Value,
     /// Worley noise
     Worley,
+}
+
+/// Fractal function that should be used on the noise values
+pub enum FunctionName {
+    /// See [`BasicMulti`](../../noise/struct.BasicMulti.html)
+    BasicMulti,
+    /// See [`Billow`](../../noise/struct.Billow.html)
+    Billow,
+    /// See [`Fbm`](../../noise/struct.Fbm.html)
+    Fbm,
+    /// See [`HybridMulti`](../../noise/struct.HybridMulti.html)
+    HybridMulti,
+    /// See [`RidgedMulti`](../../noise/struct.RidgedMulti.html)
+    RidgedMulti,
+}
+
+/// Fractal function configuration
+pub struct Function {
+    /// Name of the function
+    pub name: FunctionName,
+    pub octaves: usize,
+    pub frequency: f64,
+    pub lacunarity: f64,
+    pub persistence: f64,
 }
 
 fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImage, &NoiseMap)>) {
