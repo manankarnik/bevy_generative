@@ -3,7 +3,7 @@
 //! For configuration, see [`NoiseMap`](./struct.NoiseMap.html)
 //! ```
 //! use bevy::prelude::*;
-//! use bevy_generative::noise_map::{NoiseMap, NoiseMapPlugin};
+//! use bevy_generative::noise_map::{NoiseMapBundle, NoiseMapPlugin};
 //!
 //! fn main() {
 //!     App::new()
@@ -15,7 +15,7 @@
 //!
 //! fn setup(mut commands: Commands) {
 //!     commands.spawn(Camera2dBundle::default());
-//!     commands.spawn((ImageBundle::default(), NoiseMap::default()));
+//!     commands.spawn(NoiseMapBundle::default());
 //! }
 //! ```
 use bevy::{
@@ -36,11 +36,11 @@ impl Plugin for NoiseMapPlugin {
 
 /// Region based on height of map
 pub struct Region {
-    /// Description of region
+    /// Label of the region
     pub label: String,
-    /// Height value of region
+    /// Percentage below which the region should render
     pub height: f64,
-    /// Color representing region
+    /// Color representing the region
     pub color: Color,
 }
 
@@ -55,7 +55,7 @@ pub struct NoiseMap {
     pub scale: f64,
     /// Offset of the noise map
     pub offset: [i32; 2],
-    /// Method used to noise map
+    /// Method used to generate noise map
     pub method: Method,
     /// Vector of regions in noise map
     pub regions: Vec<Region>,
