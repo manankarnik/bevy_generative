@@ -69,7 +69,6 @@ pub struct NoiseMapBundle {
     /// See [`NoiseMap`](./struct.NoiseMap.html)
     pub noise_map: NoiseMap,
     /// See [`ImageBundle`](../../bevy/prelude/struct.ImageBundle.html)
-    #[bundle]
     pub image_bundle: ImageBundle,
 }
 
