@@ -146,7 +146,7 @@ pub struct Function {
 }
 
 fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImage, &NoiseMap)>) {
-    for (mut ui_image, noise_map) in query.iter_mut() {
+    for (mut ui_image, noise_map) in &mut query {
         let mut image_buffer = image::RgbImage::new(noise_map.size[0], noise_map.size[1]);
         let noise_space = generate_noise_map(noise_map);
         for x in 0..image_buffer.width() {
@@ -155,7 +155,7 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImag
                 // image_buffer.put_pixel(x, y, image::Rgb([color; 3]));
                 for region in &noise_map.regions {
                     if noise_space[x as usize][y as usize]
-                        <= -1.0 + (noise_map.threshold / 100.0) * (1.0 - (-1.0))
+                        <= (noise_map.threshold / 100.0).mul_add(1.0 - (-1.0), -1.0)
                     {
                         image_buffer.put_pixel(
                             x,
@@ -167,7 +167,7 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImag
                             ]),
                         );
                     } else if noise_space[x as usize][y as usize]
-                        <= -1.0 + ((region.height + noise_map.threshold) / 100.0) * (1.0 - (-1.0))
+                        <= ((region.height + noise_map.threshold) / 100.0).mul_add(1.0 - (-1.0), -1.0)
                     {
                         let color = region.color;
                         image_buffer.put_pixel(
