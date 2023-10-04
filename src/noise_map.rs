@@ -41,7 +41,7 @@ pub struct Region {
     /// Percentage below which the region should render
     pub height: f64,
     /// Color representing the region
-    pub color: Color,
+    pub color: [u8; 3],
 }
 
 /// Component for noise map configuration
@@ -56,7 +56,7 @@ pub struct NoiseMap {
     /// Offset of the noise map
     pub offset: [i32; 2],
     /// Color of noise values in threshold
-    pub threshold_color: Color,
+    pub threshold_color: [u8; 3],
     /// Threshold region
     pub threshold: f64,
     /// Method used to generate noise map
@@ -84,19 +84,29 @@ impl Default for NoiseMap {
             scale: 50.0,
             offset: [0; 2],
             threshold: 40.0,
-            threshold_color: Color::hex("#183D87").unwrap(),
+            threshold_color: [24, 61, 135],
             method: Method::Perlin,
             function: None,
             regions: vec![
                 Region {
                     label: "Sand".to_string(),
-                    color: Color::hex("#F2F1C7").unwrap(),
-                    height: 50.0,
+                    color: [242, 241, 199],
+                    height: 10.0,
                 },
                 Region {
                     label: "Forest".to_string(),
-                    color: Color::hex("#137D38").unwrap(),
-                    height: 100.0,
+                    color: [19, 125, 56],
+                    height: 50.0,
+                },
+                Region {
+                    label: "Mountain".to_string(),
+                    color: [59, 39, 30],
+                    height: 90.0,
+                },
+                Region {
+                    label: "Snow".to_string(),
+                    color: [240, 238, 237],
+                    height: 90.0,
                 },
             ],
         }
@@ -153,33 +163,20 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImag
             for y in 0..image_buffer.height() {
                 // let color = noise_space[x as usize][y as usize].mul_add(255.0, -1.0) as u8;
                 // image_buffer.put_pixel(x, y, image::Rgb([color; 3]));
-                for region in &noise_map.regions {
-                    if noise_space[x as usize][y as usize]
-                        <= (noise_map.threshold / 100.0).mul_add(1.0 - (-1.0), -1.0)
-                    {
-                        image_buffer.put_pixel(
-                            x,
-                            y,
-                            image::Rgb([
-                                (noise_map.threshold_color.r() * 255.0) as u8,
-                                (noise_map.threshold_color.g() * 255.0) as u8,
-                                (noise_map.threshold_color.b() * 255.0) as u8,
-                            ]),
-                        );
-                    } else if noise_space[x as usize][y as usize]
-                        <= ((region.height + noise_map.threshold) / 100.0).mul_add(1.0 - (-1.0), -1.0)
-                    {
-                        let color = region.color;
-                        image_buffer.put_pixel(
-                            x,
-                            y,
-                            image::Rgb([
-                                (color.r() * 255.0) as u8,
-                                (color.g() * 255.0) as u8,
-                                (color.b() * 255.0) as u8,
-                            ]),
-                        );
-                        break;
+                if noise_space[x as usize][y as usize]
+                    <= (noise_map.threshold / 100.0).mul_add(1.0 - (-1.0), -1.0)
+                {
+                    image_buffer.put_pixel(x, y, image::Rgb(noise_map.threshold_color));
+                } else {
+                    for region in &noise_map.regions {
+                        if noise_space[x as usize][y as usize]
+                            <= ((region.height + noise_map.threshold) / 100.0)
+                                .mul_add(1.0 - (-1.0), -1.0)
+                        {
+                            let color = region.color;
+                            image_buffer.put_pixel(x, y, image::Rgb(region.color));
+                            break;
+                        }
                     }
                 }
             }

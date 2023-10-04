@@ -36,43 +36,43 @@ fn setup(mut commands: Commands) {
                     scale: 50.0,
                     size: [250; 2],
                     offset: [500, 0],
-                    threshold: 30.0,
+                    threshold: 45.0,
                     function: Some(Function {
                         name: FunctionName::Fbm,
-                        octaves: 8,
-                        lacunarity: 2.9,
-                        frequency: 1.0,
-                        persistence: 0.4,
+                        octaves: 5,
+                        lacunarity: 4.5,
+                        frequency: 0.25,
+                        persistence: 0.7,
                     }),
                     regions: vec![
                         Region {
                             label: "Sand".to_string(),
-                            color: Color::hex("#F2F1C7").unwrap(),
+                            color: [242, 241, 199],
                             height: 4.0,
                         },
                         Region {
                             label: "Grass".to_string(),
-                            color: Color::hex("#189443").unwrap(),
-                            height: 20.0,
+                            color: [24, 148, 67],
+                            height: 10.0,
                         },
                         Region {
                             label: "Forest".to_string(),
-                            color: Color::hex("#0A5223").unwrap(),
-                            height: 40.0,
+                            color: [10, 82, 35],
+                            height: 20.0,
                         },
                         Region {
                             label: "Plateau".to_string(),
-                            color: Color::hex("#3B271E").unwrap(),
-                            height: 60.0,
+                            color: [59, 39, 30],
+                            height: 25.0,
                         },
                         Region {
                             label: "Mountain".to_string(),
-                            color: Color::hex("#2B1B14").unwrap(),
-                            height: 90.0,
+                            color: [43, 27, 20],
+                            height: 35.0,
                         },
                         Region {
                             label: "Snow".to_string(),
-                            color: Color::hex("#F0EEED").unwrap(),
+                            color: [240, 238, 237],
                             height: 100.0,
                         },
                     ],
@@ -92,16 +92,64 @@ fn setup(mut commands: Commands) {
 
 fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
     let mut noise_map = query.single_mut();
-    egui::Window::new("Config").show(contexts.ctx_mut(), |ui| {
-        ui.add(DragValue::new(&mut noise_map.seed).prefix("Seed: "));
-        ui.add(Slider::new(&mut noise_map.scale, 1.0..=32.0).text("Scale"));
-        ui.add(Slider::new(&mut noise_map.threshold, 0.0..=100.0).text("Threshold"));
-        if let Some(mut function) = noise_map.function.take() {
-            ui.add(Slider::new(&mut function.octaves, 0..=10).text("Octaves"));
-            ui.add(Slider::new(&mut function.frequency, 0.0..=0.5).text("Frequency"));
-            ui.add(Slider::new(&mut function.lacunarity, 0.0..=30.0).text("Lacunarity"));
-            ui.add(Slider::new(&mut function.persistence, 0.01..=1.0).text("Persistence"));
-            noise_map.function = Some(function);
-        }
-    });
+    egui::Window::new("Config")
+        .default_width(50.0)
+        .show(contexts.ctx_mut(), |ui| {
+            ui.horizontal(|ui| {
+                ui.label("Seed");
+                ui.add(DragValue::new(&mut noise_map.seed));
+            });
+            ui.add(Slider::new(&mut noise_map.scale, 1.0..=100.0).text("Scale"));
+            if let Some(mut function) = noise_map.function.take() {
+                ui.add(Slider::new(&mut function.octaves, 0..=10).text("Octaves"));
+                ui.add(Slider::new(&mut function.frequency, 0.0..=0.5).text("Frequency"));
+                ui.add(Slider::new(&mut function.lacunarity, 0.0..=30.0).text("Lacunarity"));
+                ui.add(Slider::new(&mut function.persistence, 0.01..=1.0).text("Persistence"));
+                noise_map.function = Some(function);
+            }
+            ui.group(|ui| {
+                ui.centered(|ui| {
+                    if ui.button("Add Region").clicked() {
+                        noise_map.regions.push(Region {
+                            label: "".to_string(),
+                            height: 0.0,
+                            color: [0, 0, 0],
+                        });
+                    }
+                });
+                ui.separator();
+                ui.label("Threshold");
+                ui.add(Slider::new(&mut noise_map.threshold, 0.0..=100.0).text("Height"));
+                ui.horizontal(|ui| {
+                    ui.color_edit_button_srgb(&mut noise_map.threshold_color);
+                    ui.label("Color");
+                });
+                ui.separator();
+                let regions_len = noise_map.regions.len();
+                let mut regions_to_remove: Vec<usize> = Vec::with_capacity(regions_len);
+                for (i, region) in noise_map.regions.iter_mut().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label(&format!("Region #{}", i + 1));
+                        if ui.button("Remove").clicked() {
+                            regions_to_remove.push(i);
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Label");
+                        ui.text_edit_singleline(&mut region.label);
+                    });
+                    ui.add(Slider::new(&mut region.height, 0.0..=100.0).text("Height"));
+                    ui.horizontal(|ui| {
+                        ui.color_edit_button_srgb(&mut region.color);
+                        ui.label("Color");
+                    });
+                    if i != regions_len - 1 {
+                        ui.separator();
+                    }
+                }
+                for i in regions_to_remove {
+                    noise_map.regions.remove(i);
+                }
+            });
+        });
 }
