@@ -8,8 +8,8 @@
 //! fn main() {
 //!     App::new()
 //!         .add_plugins(DefaultPlugins)
-//!         .add_plugin(NoiseMapPlugin)
-//!         .add_startup_system(setup)
+//!         .add_plugins(NoiseMapPlugin)
+//!         .add_systems(Startup, setup)
 //!         .run();
 //! }
 //!
@@ -30,7 +30,7 @@ pub struct NoiseMapPlugin;
 
 impl Plugin for NoiseMapPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(generate_map);
+        app.add_systems(Update, generate_map);
     }
 }
 
@@ -55,6 +55,10 @@ pub struct NoiseMap {
     pub scale: f64,
     /// Offset of the noise map
     pub offset: [i32; 2],
+    /// Color of noise values in threshold
+    pub threshold_color: Color,
+    /// Threshold region
+    pub threshold: f64,
     /// Method used to generate noise map
     pub method: Method,
     /// Function used to generate noise map
@@ -77,16 +81,13 @@ impl Default for NoiseMap {
         Self {
             size: [100; 2],
             seed: 0,
-            scale: 0.04,
+            scale: 50.0,
             offset: [0; 2],
+            threshold: 40.0,
+            threshold_color: Color::hex("#183D87").unwrap(),
             method: Method::Perlin,
             function: None,
             regions: vec![
-                Region {
-                    label: "Water".to_string(),
-                    color: Color::hex("#183D87").unwrap(),
-                    height: 47.0,
-                },
                 Region {
                     label: "Sand".to_string(),
                     color: Color::hex("#F2F1C7").unwrap(),
@@ -150,9 +151,23 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImag
         let noise_space = generate_noise_map(noise_map);
         for x in 0..image_buffer.width() {
             for y in 0..image_buffer.height() {
+                // let color = noise_space[x as usize][y as usize].mul_add(255.0, -1.0) as u8;
+                // image_buffer.put_pixel(x, y, image::Rgb([color; 3]));
                 for region in &noise_map.regions {
                     if noise_space[x as usize][y as usize]
-                        <= -1.0 + (region.height / 100.0) * (1.0 - (-1.0))
+                        <= -1.0 + (noise_map.threshold / 100.0) * (1.0 - (-1.0))
+                    {
+                        image_buffer.put_pixel(
+                            x,
+                            y,
+                            image::Rgb([
+                                (noise_map.threshold_color.r() * 255.0) as u8,
+                                (noise_map.threshold_color.g() * 255.0) as u8,
+                                (noise_map.threshold_color.b() * 255.0) as u8,
+                            ]),
+                        );
+                    } else if noise_space[x as usize][y as usize]
+                        <= -1.0 + ((region.height + noise_map.threshold) / 100.0) * (1.0 - (-1.0))
                     {
                         let color = region.color;
                         image_buffer.put_pixel(

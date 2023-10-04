@@ -3,6 +3,7 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_generative::noise_map::{
     Function, FunctionName, Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin, Region,
 };
+use egui::{DragValue, Slider};
 
 fn main() {
     App::new()
@@ -10,8 +11,7 @@ fn main() {
         .add_plugins(EguiPlugin)
         .add_plugins(NoiseMapPlugin)
         .add_systems(Startup, setup)
-        .add_systems(Update, setup_egui)
-        .add_systems(Update, tweak_map)
+        .add_systems(Update, gui)
         .run();
 }
 
@@ -33,46 +33,37 @@ fn setup(mut commands: Commands) {
             parent.spawn(NoiseMapBundle {
                 noise_map: NoiseMap {
                     method: Method::Perlin,
-                    scale: 0.05,
-                    size: [200; 2],
+                    scale: 50.0,
+                    size: [250; 2],
                     offset: [500, 0],
+                    threshold: 30.0,
                     function: Some(Function {
                         name: FunctionName::Fbm,
-                        octaves: 6,
+                        octaves: 8,
+                        lacunarity: 2.9,
                         frequency: 1.0,
-                        lacunarity: 0.5,
-                        persistence: 1.0,
+                        persistence: 0.4,
                     }),
                     regions: vec![
                         Region {
-                            label: "Water Deep".to_string(),
-                            color: Color::hex("#183D87").unwrap(),
-                            height: 30.0,
-                        },
-                        Region {
-                            label: "Water Shallow".to_string(),
-                            color: Color::hex("#214794").unwrap(),
-                            height: 40.0,
-                        },
-                        Region {
                             label: "Sand".to_string(),
                             color: Color::hex("#F2F1C7").unwrap(),
-                            height: 45.0,
+                            height: 4.0,
                         },
                         Region {
                             label: "Grass".to_string(),
                             color: Color::hex("#189443").unwrap(),
-                            height: 55.0,
+                            height: 20.0,
                         },
                         Region {
                             label: "Forest".to_string(),
                             color: Color::hex("#0A5223").unwrap(),
-                            height: 60.0,
+                            height: 40.0,
                         },
                         Region {
                             label: "Plateau".to_string(),
                             color: Color::hex("#3B271E").unwrap(),
-                            height: 70.0,
+                            height: 60.0,
                         },
                         Region {
                             label: "Mountain".to_string(),
@@ -83,11 +74,6 @@ fn setup(mut commands: Commands) {
                             label: "Snow".to_string(),
                             color: Color::hex("#F0EEED").unwrap(),
                             height: 100.0,
-                        },
-                        Region {
-                            label: "Forest".to_string(),
-                            color: Color::hex("#137D38").unwrap(),
-                            height: 60.0,
                         },
                     ],
                     ..default()
@@ -100,20 +86,22 @@ fn setup(mut commands: Commands) {
                     },
                     ..default()
                 },
-                ..default()
             });
         });
 }
 
-fn setup_egui(mut contexts: EguiContexts) {
-    egui::Window::new("Hello").show(contexts.ctx_mut(), |ui| {
-        ui.label("world");
+fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
+    let mut noise_map = query.single_mut();
+    egui::Window::new("Config").show(contexts.ctx_mut(), |ui| {
+        ui.add(DragValue::new(&mut noise_map.seed).prefix("Seed: "));
+        ui.add(Slider::new(&mut noise_map.scale, 1.0..=32.0).text("Scale"));
+        ui.add(Slider::new(&mut noise_map.threshold, 0.0..=100.0).text("Threshold"));
+        if let Some(mut function) = noise_map.function.take() {
+            ui.add(Slider::new(&mut function.octaves, 0..=10).text("Octaves"));
+            ui.add(Slider::new(&mut function.frequency, 0.0..=0.5).text("Frequency"));
+            ui.add(Slider::new(&mut function.lacunarity, 0.0..=30.0).text("Lacunarity"));
+            ui.add(Slider::new(&mut function.persistence, 0.01..=1.0).text("Persistence"));
+            noise_map.function = Some(function);
+        }
     });
-}
-
-fn tweak_map(mut query: Query<&mut NoiseMap>) {
-    for mut noise_map in query.iter_mut() {
-        if let Some(function) = &mut noise_map.function {}
-        noise_map.offset[0] += 1;
-    }
 }
