@@ -82,7 +82,7 @@ pub struct NoiseMapBundle {
 impl Default for NoiseMap {
     fn default() -> Self {
         Self {
-            size: [100; 2],
+            size: [500; 2],
             seed: 0,
             scale: 50.0,
             offset: [0.0; 2],
@@ -95,22 +95,32 @@ impl Default for NoiseMap {
                 Region {
                     label: "Sand".to_string(),
                     color: [242, 241, 199],
+                    height: 4.0,
+                },
+                Region {
+                    label: "Grass".to_string(),
+                    color: [24, 148, 67],
                     height: 10.0,
                 },
                 Region {
                     label: "Forest".to_string(),
-                    color: [19, 125, 56],
-                    height: 50.0,
+                    color: [10, 82, 35],
+                    height: 20.0,
+                },
+                Region {
+                    label: "Plateau".to_string(),
+                    color: [59, 39, 30],
+                    height: 25.0,
                 },
                 Region {
                     label: "Mountain".to_string(),
-                    color: [59, 39, 30],
-                    height: 90.0,
+                    color: [43, 27, 20],
+                    height: 35.0,
                 },
                 Region {
                     label: "Snow".to_string(),
                     color: [240, 238, 237],
-                    height: 90.0,
+                    height: 100.0,
                 },
             ],
         }
