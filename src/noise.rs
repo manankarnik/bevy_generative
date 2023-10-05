@@ -78,7 +78,7 @@ pub fn generate_noise_map(noise_map: &NoiseMap) -> Vec<Vec<f64>> {
     }
 }
 
-fn generate_noise<T>(size: [u32; 2], seed: u32, scale: f64, offset: [i32; 2]) -> Vec<Vec<f64>>
+fn generate_noise<T>(size: [u32; 2], seed: u32, scale: f64, offset: [f64; 2]) -> Vec<Vec<f64>>
 where
     T: Default + Seedable + NoiseFn<f64, 2>,
 {
@@ -91,7 +91,7 @@ fn generate_fractal_noise<T>(
     size: [u32; 2],
     seed: u32,
     scale: f64,
-    offset: [i32; 2],
+    offset: [f64; 2],
     function: &Function,
 ) -> Vec<Vec<f64>>
 where
@@ -110,7 +110,7 @@ fn generate_noise_vector(
     noise: impl NoiseFn<f64, 2>,
     size: [u32; 2],
     scale: f64,
-    offset: [i32; 2],
+    offset: [f64; 2],
 ) -> Vec<Vec<f64>> {
     let mut noise_vector: Vec<Vec<f64>> = Vec::with_capacity(size[0] as usize);
     for i in 0..size[0] {

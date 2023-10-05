@@ -55,7 +55,7 @@ pub struct NoiseMap {
     /// Scale of the noise map
     pub scale: f64,
     /// Offset of the noise map
-    pub offset: [i32; 2],
+    pub offset: [f64; 2],
     /// Color of noise values in threshold
     pub threshold_color: [u8; 3],
     /// Threshold region
@@ -85,7 +85,7 @@ impl Default for NoiseMap {
             size: [100; 2],
             seed: 0,
             scale: 50.0,
-            offset: [0; 2],
+            offset: [0.0; 2],
             threshold: 40.0,
             threshold_color: [24, 61, 135],
             method: Method::Perlin,
