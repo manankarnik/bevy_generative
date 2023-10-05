@@ -24,6 +24,7 @@ use bevy::{
 };
 
 use crate::noise::generate_noise_map;
+use std::fmt;
 
 /// Plugin to generate noise map
 pub struct NoiseMapPlugin;
@@ -62,9 +63,11 @@ pub struct NoiseMap {
     /// Method used to generate noise map
     pub method: Method,
     /// Function used to generate noise map
-    pub function: Option<Function>,
+    pub function: Function,
     /// Vector of regions in noise map
     pub regions: Vec<Region>,
+    /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
+    pub anti_aliasing: bool,
 }
 
 /// Display `NoiseMap` as a ui node
@@ -86,7 +89,8 @@ impl Default for NoiseMap {
             threshold: 40.0,
             threshold_color: [24, 61, 135],
             method: Method::Perlin,
-            function: None,
+            function: Function::default(),
+            anti_aliasing: true,
             regions: vec![
                 Region {
                     label: "Sand".to_string(),
@@ -114,6 +118,7 @@ impl Default for NoiseMap {
 }
 
 /// 2 dimensional noise method used to generate noise map
+#[derive(PartialEq)]
 pub enum Method {
     /// Open Simplex noise
     OpenSimplex,
@@ -131,7 +136,22 @@ pub enum Method {
     Worley,
 }
 
+impl fmt::Display for Method {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            Method::OpenSimplex => write!(f, "Open Simplex"),
+            Method::Perlin => write!(f, "Perlin"),
+            Method::PerlinSurflet => write!(f, "Perlin Surflet"),
+            Method::Simplex => write!(f, "Simplex"),
+            Method::SuperSimplex => write!(f, "Super Simplex"),
+            Method::Value => write!(f, "Value"),
+            Method::Worley => write!(f, "Worley"),
+        }
+    }
+}
+
 /// Fractal function that should be used on the noise values
+#[derive(PartialEq)]
 pub enum FunctionName {
     /// See [`BasicMulti`](../../noise/struct.BasicMulti.html)
     BasicMulti,
@@ -145,14 +165,38 @@ pub enum FunctionName {
     RidgedMulti,
 }
 
+impl fmt::Display for FunctionName {
+    fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
+        match self {
+            FunctionName::BasicMulti => write!(f, "Basic Multi"),
+            FunctionName::Billow => write!(f, "Billow"),
+            FunctionName::Fbm => write!(f, "FBM"),
+            FunctionName::HybridMulti => write!(f, "Hybrid Multi"),
+            FunctionName::RidgedMulti => write!(f, "Ridged Multi"),
+        }
+    }
+}
+
 /// Fractal function configuration
 pub struct Function {
     /// Name of the function
-    pub name: FunctionName,
+    pub name: Option<FunctionName>,
     pub octaves: usize,
     pub frequency: f64,
     pub lacunarity: f64,
     pub persistence: f64,
+}
+
+impl Default for Function {
+    fn default() -> Self {
+        Self {
+            name: Some(FunctionName::Fbm),
+            octaves: noise::Fbm::<noise::Perlin>::DEFAULT_OCTAVE_COUNT,
+            frequency: noise::Fbm::<noise::Perlin>::DEFAULT_FREQUENCY,
+            lacunarity: noise::Fbm::<noise::Perlin>::DEFAULT_LACUNARITY,
+            persistence: noise::Fbm::<noise::Perlin>::DEFAULT_PERSISTENCE,
+        }
+    }
 }
 
 fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImage, &NoiseMap)>) {
@@ -184,7 +228,11 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImag
         let mut noise_map_texture = Image::from_dynamic(image_buffer.into(), true)
             .convert(TextureFormat::Rgba8UnormSrgb)
             .expect("Could not convert to Rgba8UnormSrgb");
-        noise_map_texture.sampler_descriptor = ImageSampler::nearest();
+        noise_map_texture.sampler_descriptor = if noise_map.anti_aliasing {
+            ImageSampler::linear()
+        } else {
+            ImageSampler::nearest()
+        };
         ui_image.texture = images.add(noise_map_texture);
     }
 }

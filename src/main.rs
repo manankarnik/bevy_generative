@@ -3,7 +3,7 @@ use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_generative::noise_map::{
     Function, FunctionName, Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin, Region,
 };
-use egui::{DragValue, Slider};
+use egui::{ComboBox, DragValue, Slider};
 
 fn main() {
     App::new()
@@ -37,13 +37,14 @@ fn setup(mut commands: Commands) {
                     size: [250; 2],
                     offset: [500, 0],
                     threshold: 45.0,
-                    function: Some(Function {
-                        name: FunctionName::Fbm,
+                    function: Function {
+                        name: Some(FunctionName::Fbm),
                         octaves: 5,
                         lacunarity: 4.5,
                         frequency: 0.25,
                         persistence: 0.7,
-                    }),
+                    },
+                    anti_aliasing: true,
                     regions: vec![
                         Region {
                             label: "Sand".to_string(),
@@ -95,28 +96,105 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
     egui::Window::new("Config")
         .default_width(50.0)
         .show(contexts.ctx_mut(), |ui| {
+            ComboBox::from_label("Method")
+                .selected_text(noise_map.method.to_string())
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(
+                        &mut noise_map.method,
+                        Method::OpenSimplex,
+                        Method::OpenSimplex.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.method,
+                        Method::Perlin,
+                        Method::Perlin.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.method,
+                        Method::PerlinSurflet,
+                        Method::PerlinSurflet.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.method,
+                        Method::Simplex,
+                        Method::Simplex.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.method,
+                        Method::SuperSimplex,
+                        Method::SuperSimplex.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.method,
+                        Method::Value,
+                        Method::Value.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.method,
+                        Method::Worley,
+                        Method::Worley.to_string(),
+                    );
+                });
             ui.horizontal(|ui| {
                 ui.label("Seed");
                 ui.add(DragValue::new(&mut noise_map.seed));
             });
+            ui.checkbox(&mut noise_map.anti_aliasing, "Anti-aliasing");
             ui.add(Slider::new(&mut noise_map.scale, 1.0..=100.0).text("Scale"));
-            if let Some(mut function) = noise_map.function.take() {
-                ui.add(Slider::new(&mut function.octaves, 0..=10).text("Octaves"));
-                ui.add(Slider::new(&mut function.frequency, 0.0..=0.5).text("Frequency"));
-                ui.add(Slider::new(&mut function.lacunarity, 0.0..=30.0).text("Lacunarity"));
-                ui.add(Slider::new(&mut function.persistence, 0.01..=1.0).text("Persistence"));
-                noise_map.function = Some(function);
+
+            ComboBox::from_label("Function")
+                .selected_text(if let Some(function_name) = &noise_map.function.name {
+                    function_name.to_string()
+                } else {
+                    "None".to_string()
+                })
+                .show_ui(ui, |ui| {
+                    ui.selectable_value(&mut noise_map.function.name, None, "None");
+                    ui.selectable_value(
+                        &mut noise_map.function.name,
+                        Some(FunctionName::BasicMulti),
+                        FunctionName::BasicMulti.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.function.name,
+                        Some(FunctionName::Billow),
+                        FunctionName::Billow.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.function.name,
+                        Some(FunctionName::Fbm),
+                        FunctionName::Fbm.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.function.name,
+                        Some(FunctionName::HybridMulti),
+                        FunctionName::HybridMulti.to_string(),
+                    );
+                    ui.selectable_value(
+                        &mut noise_map.function.name,
+                        Some(FunctionName::RidgedMulti),
+                        FunctionName::RidgedMulti.to_string(),
+                    );
+                });
+            if let Some(function_name) = &noise_map.function.name {
+                ui.add(Slider::new(&mut noise_map.function.octaves, 0..=10).text("Octaves"));
+                ui.add(Slider::new(&mut noise_map.function.frequency, 0.0..=0.5).text("Frequency"));
+                ui.add(
+                    Slider::new(&mut noise_map.function.lacunarity, 0.0..=30.0).text("Lacunarity"),
+                );
+                ui.add(
+                    Slider::new(&mut noise_map.function.persistence, 0.01..=1.0)
+                        .text("Persistence"),
+                );
             }
             ui.group(|ui| {
-                ui.centered(|ui| {
-                    if ui.button("Add Region").clicked() {
-                        noise_map.regions.push(Region {
-                            label: "".to_string(),
-                            height: 0.0,
-                            color: [0, 0, 0],
-                        });
-                    }
-                });
+                if ui.button("Add Region").clicked() {
+                    noise_map.regions.push(Region {
+                        label: "".to_string(),
+                        height: 0.0,
+                        color: [0, 0, 0],
+                    });
+                }
                 ui.separator();
                 ui.label("Threshold");
                 ui.add(Slider::new(&mut noise_map.threshold, 0.0..=100.0).text("Height"));

@@ -4,8 +4,8 @@ use noise::{MultiFractal, NoiseFn, Seedable};
 use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
 
 pub fn generate_noise_map(noise_map: &NoiseMap) -> Vec<Vec<f64>> {
-    if let Some(function) = &noise_map.function {
-        let generate_noise_map = match function.name {
+    if let Some(function_name) = &noise_map.function.name {
+        let generate_noise_map = match function_name {
             FunctionName::BasicMulti => match noise_map.method {
                 Method::OpenSimplex => generate_fractal_noise::<BasicMulti<OpenSimplex>>,
                 Method::Perlin => generate_fractal_noise::<BasicMulti<Perlin>>,
@@ -57,7 +57,7 @@ pub fn generate_noise_map(noise_map: &NoiseMap) -> Vec<Vec<f64>> {
             noise_map.seed,
             noise_map.scale,
             noise_map.offset,
-            function,
+            &noise_map.function,
         )
     } else {
         let generate_noise_map = match noise_map.method {
