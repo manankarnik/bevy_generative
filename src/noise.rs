@@ -1,4 +1,5 @@
 use crate::noise_map::{Function, FunctionName, Method, NoiseMap};
+use bevy::prelude::info;
 use noise::{BasicMulti, Billow, Fbm, HybridMulti, RidgedMulti};
 use noise::{MultiFractal, NoiseFn, Seedable};
 use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
@@ -113,12 +114,13 @@ fn generate_noise_vector(
     offset: [f64; 2],
 ) -> Vec<Vec<f64>> {
     let mut noise_vector: Vec<Vec<f64>> = Vec::with_capacity(size[0] as usize);
+    let noise = noise::Clamp::new(noise).set_bounds(-1.0, 1.0);
     for i in 0..size[0] {
         let mut row: Vec<f64> = Vec::with_capacity(size[1] as usize);
         for j in 0..size[1] {
             let x = f64::from(i as i32 - (size[0] / 2) as i32) / scale + f64::from(offset[0]);
             let y = f64::from(j as i32 - (size[1] / 2) as i32) / scale + f64::from(offset[1]);
-            let value = noise.get([x, y]);
+            let value = (noise.get([x, y]) + 1.0) / 2.0 * 100.0;
             row.push(value);
         }
         noise_vector.push(row);

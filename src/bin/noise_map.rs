@@ -1,7 +1,7 @@
 use bevy::prelude::*;
 use bevy_egui::{egui, EguiContexts, EguiPlugin};
 use bevy_generative::noise_map::{
-    Function, FunctionName, Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin, Region,
+    FunctionName, Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin, Region,
 };
 use egui::{ComboBox, DragValue, Slider};
 
@@ -36,6 +36,9 @@ fn setup(mut commands: Commands) {
 
 fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
     let mut noise_map = query.single_mut();
+    let texture_id = contexts.add_image(noise_map.gradient.image.clone_weak());
+    let mut min_pos = 0.0;
+
     egui::SidePanel::left("Config").show(contexts.ctx_mut(), |ui| {
         ui.heading("Config");
         ui.separator();
@@ -136,11 +139,26 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
             );
         }
         ui.group(|ui| {
+            ui.add(egui::widgets::Image::new(
+                texture_id,
+                [
+                    noise_map.gradient.size[0] as f32,
+                    noise_map.gradient.size[1] as f32,
+                ],
+            ));
+            ui.add(Slider::new(&mut noise_map.gradient.smoothness, 0.0..=1.0).text("Smoothness"));
+            ui.horizontal(|ui| {
+                ui.label("Segments");
+                ui.add(DragValue::new(&mut noise_map.gradient.segments).clamp_range(0..=100));
+            });
+            ui.separator();
             if ui.button("Add Region").clicked() {
+                let index = noise_map.regions.len() + 1;
                 noise_map.regions.push(Region {
-                    label: "".to_string(),
-                    height: 0.0,
+                    label: format!("Region #{index}"),
+                    position: 0.0,
                     color: [0, 0, 0],
+                    ..default()
                 });
             }
             ui.separator();
@@ -164,7 +182,17 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
                     ui.label("Label");
                     ui.text_edit_singleline(&mut region.label);
                 });
-                ui.add(Slider::new(&mut region.height, 0.0..=100.0).text("Height"));
+
+                ui.horizontal(|ui| {
+                    ui.label("Position");
+                    ui.add(
+                        DragValue::new(&mut region.position)
+                            .speed(0.01)
+                            .clamp_range(min_pos..=1.0),
+                    )
+                });
+                min_pos = region.position;
+
                 ui.horizontal(|ui| {
                     ui.color_edit_button_srgb(&mut region.color);
                     ui.label("Color");

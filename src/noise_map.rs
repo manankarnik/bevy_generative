@@ -24,6 +24,7 @@ use bevy::{
 };
 
 use crate::noise::generate_noise_map;
+use crate::util::lerp_color;
 use std::fmt;
 
 /// Plugin to generate noise map
@@ -40,9 +41,37 @@ pub struct Region {
     /// Label of the region
     pub label: String,
     /// Percentage below which the region should render
-    pub height: f64,
+    pub position: f64,
     /// Color representing the region
     pub color: [u8; 3],
+}
+
+impl Default for Region {
+    fn default() -> Self {
+        Self {
+            label: "".to_string(),
+            position: 0.0,
+            color: [0, 0, 0],
+        }
+    }
+}
+
+pub struct Gradient {
+    pub image: Handle<Image>,
+    pub size: [u32; 2],
+    pub segments: usize,
+    pub smoothness: f64,
+}
+
+impl Default for Gradient {
+    fn default() -> Self {
+        Self {
+            image: Handle::default(),
+            size: [200, 50],
+            segments: 0,
+            smoothness: 1.0,
+        }
+    }
 }
 
 /// Component for noise map configuration
@@ -56,16 +85,17 @@ pub struct NoiseMap {
     pub scale: f64,
     /// Offset of the noise map
     pub offset: [f64; 2],
-    /// Color of noise values in threshold
-    pub threshold_color: [u8; 3],
     /// Threshold region
     pub threshold: f64,
+    /// Color of noise values in threshold
+    pub threshold_color: [u8; 3],
     /// Method used to generate noise map
     pub method: Method,
     /// Function used to generate noise map
     pub function: Function,
     /// Vector of regions in noise map
     pub regions: Vec<Region>,
+    pub gradient: Gradient,
     /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
     pub anti_aliasing: bool,
 }
@@ -86,7 +116,7 @@ impl Default for NoiseMap {
             seed: 0,
             scale: 50.0,
             offset: [0.0; 2],
-            threshold: 40.0,
+            threshold: 30.0,
             threshold_color: [24, 61, 135],
             method: Method::Perlin,
             function: Function::default(),
@@ -95,34 +125,23 @@ impl Default for NoiseMap {
                 Region {
                     label: "Sand".to_string(),
                     color: [242, 241, 199],
-                    height: 4.0,
+                    position: 0.0,
+                    ..default()
                 },
                 Region {
                     label: "Grass".to_string(),
                     color: [24, 148, 67],
-                    height: 10.0,
+                    position: 0.5,
+                    ..default()
                 },
                 Region {
                     label: "Forest".to_string(),
                     color: [10, 82, 35],
-                    height: 20.0,
-                },
-                Region {
-                    label: "Plateau".to_string(),
-                    color: [59, 39, 30],
-                    height: 25.0,
-                },
-                Region {
-                    label: "Mountain".to_string(),
-                    color: [43, 27, 20],
-                    height: 35.0,
-                },
-                Region {
-                    label: "Snow".to_string(),
-                    color: [240, 238, 237],
-                    height: 100.0,
+                    position: 1.0,
+                    ..default()
                 },
             ],
+            gradient: Gradient::default(),
         }
     }
 }
@@ -209,30 +228,57 @@ impl Default for Function {
     }
 }
 
-fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImage, &NoiseMap)>) {
-    for (mut ui_image, noise_map) in &mut query {
+fn generate_map(
+    mut images: ResMut<Assets<Image>>,
+    mut query: Query<(&mut UiImage, &mut NoiseMap)>,
+) {
+    for (mut ui_image, mut noise_map) in &mut query {
         let mut image_buffer = image::RgbImage::new(noise_map.size[0], noise_map.size[1]);
-        let noise_space = generate_noise_map(noise_map);
+        let noise_values = generate_noise_map(&noise_map);
+
+        let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(noise_map.regions.len());
+        let mut domain: Vec<f64> = Vec::with_capacity(noise_map.regions.len());
+        for region in &noise_map.regions {
+            colors.push(colorgrad::Color {
+                r: region.color[0] as f64 / 255.0,
+                g: region.color[1] as f64 / 255.0,
+                b: region.color[2] as f64 / 255.0,
+                a: 1.0,
+            });
+            domain.push(region.position);
+        }
+        let grad = colorgrad::CustomGradient::new()
+            .colors(&colors)
+            .domain(&domain)
+            .build()
+            .expect("Gradient generation failed")
+            .sharp(noise_map.gradient.segments, noise_map.gradient.smoothness);
+
+        let mut gradient_buffer =
+            image::ImageBuffer::new(noise_map.gradient.size[0], noise_map.gradient.size[1]);
+
+        for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
+            let rgba = grad
+                .at(x as f64 / noise_map.gradient.size[0] as f64)
+                .to_rgba8();
+            *pixel = image::Rgba(rgba);
+        }
+
+        noise_map.gradient.image = images.add(
+            Image::from_dynamic(gradient_buffer.into(), true)
+                .convert(bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb)
+                .expect("Could not convert to Rgba8UnormSrgb"),
+        );
+
         for x in 0..image_buffer.width() {
             for y in 0..image_buffer.height() {
-                // let color = noise_space[x as usize][y as usize].mul_add(255.0, -1.0) as u8;
-                // image_buffer.put_pixel(x, y, image::Rgb([color; 3]));
-                if noise_space[x as usize][y as usize]
-                    <= (noise_map.threshold / 100.0).mul_add(1.0 - (-1.0), -1.0)
-                {
-                    image_buffer.put_pixel(x, y, image::Rgb(noise_map.threshold_color));
-                } else {
-                    for region in &noise_map.regions {
-                        if noise_space[x as usize][y as usize]
-                            <= ((region.height + noise_map.threshold) / 100.0)
-                                .mul_add(1.0 - (-1.0), -1.0)
-                        {
-                            let color = region.color;
-                            image_buffer.put_pixel(x, y, image::Rgb(region.color));
-                            break;
-                        }
-                    }
-                }
+                let height = noise_values[x as usize][y as usize];
+                let target_color = grad.at(height / 100.0).to_rgba8();
+                image_buffer.put_pixel(
+                    x,
+                    y,
+                    image::Rgb([target_color[0], target_color[1], target_color[2]]),
+                );
             }
         }
         let mut noise_map_texture = Image::from_dynamic(image_buffer.into(), true)

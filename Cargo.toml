@@ -3,6 +3,7 @@ name = "bevy_generative"
 version = "0.1.0"
 license = "MIT"
 edition = "2021"
+default-run = "bevy_generative"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [[bin]]
@@ -12,6 +13,7 @@ path = "src/bin/noise_map.rs"
 [dependencies]
 bevy = "0.11.3"
 bevy_egui = "0.21.0"
+colorgrad = "0.6.2"
 image = "0.24.7"
 noise = { git = "https://github.com/Razaekel/noise-rs.git" }
 
