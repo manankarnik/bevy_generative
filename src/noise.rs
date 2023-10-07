@@ -1,5 +1,4 @@
 use crate::noise_map::{Function, FunctionName, Method, NoiseMap};
-use bevy::prelude::info;
 use noise::{BasicMulti, Billow, Fbm, HybridMulti, RidgedMulti};
 use noise::{MultiFractal, NoiseFn, Seedable};
 use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};

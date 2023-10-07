@@ -24,7 +24,6 @@ use bevy::{
 };
 
 use crate::noise::generate_noise_map;
-use crate::util::lerp_color;
 use std::fmt;
 
 /// Plugin to generate noise map
