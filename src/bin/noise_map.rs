@@ -1,5 +1,8 @@
 use bevy::prelude::*;
-use bevy_egui::{egui, EguiContexts, EguiPlugin};
+use bevy_egui::{
+    egui::{self, RichText},
+    EguiContexts, EguiPlugin,
+};
 use bevy_generative::noise_map::{
     FunctionName, Method, NoiseMap, NoiseMapBundle, NoiseMapPlugin, Region,
 };
@@ -40,6 +43,13 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
     let mut min_pos = 0.0;
 
     egui::SidePanel::left("Config").show(contexts.ctx_mut(), |ui| {
+        ui.set_style(egui::style::Style {
+            spacing: egui::style::Spacing {
+                text_edit_width: 150.0,
+                ..default()
+            },
+            ..default()
+        });
         ui.heading("Config");
         ui.separator();
         ComboBox::from_label("Method")
@@ -92,6 +102,14 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
         ui.horizontal(|ui| {
             ui.label("Y");
             ui.add(DragValue::new(&mut noise_map.offset[1]));
+        });
+        ui.horizontal(|ui| {
+            ui.label("Width");
+            ui.add(DragValue::new(&mut noise_map.size[0]).clamp_range(1..=10000));
+        });
+        ui.horizontal(|ui| {
+            ui.label("Height");
+            ui.add(DragValue::new(&mut noise_map.size[1]).clamp_range(1..=10000));
         });
         ui.checkbox(&mut noise_map.anti_aliasing, "Anti-aliasing");
         ui.add(Slider::new(&mut noise_map.scale, 1.0..=100.0).text("Scale"));
@@ -151,56 +169,51 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
                 ui.label("Segments");
                 ui.add(DragValue::new(&mut noise_map.gradient.segments).clamp_range(0..=100));
             });
+            ui.horizontal(|ui| {
+                ui.label("Base Color");
+                ui.color_edit_button_srgba_unmultiplied(&mut noise_map.base_color);
+            });
             ui.separator();
             if ui.button("Add Region").clicked() {
                 let index = noise_map.regions.len() + 1;
                 noise_map.regions.push(Region {
                     label: format!("Region #{index}"),
                     position: 0.0,
-                    color: [0, 0, 0],
+                    color: [0, 0, 0, 255],
                     ..default()
                 });
             }
             ui.separator();
-            ui.label("Threshold");
-            ui.add(Slider::new(&mut noise_map.threshold, 0.0..=100.0).text("Height"));
-            ui.horizontal(|ui| {
-                ui.color_edit_button_srgb(&mut noise_map.threshold_color);
-                ui.label("Color");
-            });
-            ui.separator();
             let regions_len = noise_map.regions.len();
             let mut regions_to_remove: Vec<usize> = Vec::with_capacity(regions_len);
-            for (i, region) in noise_map.regions.iter_mut().enumerate() {
-                ui.horizontal(|ui| {
-                    ui.label(&format!("Region #{}", i + 1));
-                    if ui.button("Remove").clicked() {
-                        regions_to_remove.push(i);
+            egui::ScrollArea::vertical().show(ui, |ui| {
+                for (i, region) in noise_map.regions.iter_mut().enumerate() {
+                    ui.horizontal(|ui| {
+                        ui.label(RichText::new(&format!("Region #{}", i + 1)).size(16.0));
+                        if ui.button("Remove").clicked() {
+                            regions_to_remove.push(i);
+                        }
+                    });
+                    ui.horizontal(|ui| {
+                        ui.label("Label");
+                        ui.text_edit_singleline(&mut region.label);
+                    });
+
+                    ui.horizontal(|ui| {
+                        ui.label("Position");
+                        ui.add(DragValue::new(&mut region.position).clamp_range(min_pos..=100.0));
+                    });
+                    min_pos = region.position;
+
+                    ui.horizontal(|ui| {
+                        ui.label("Color");
+                        ui.color_edit_button_srgba_unmultiplied(&mut region.color);
+                    });
+                    if i != regions_len - 1 {
+                        ui.separator();
                     }
-                });
-                ui.horizontal(|ui| {
-                    ui.label("Label");
-                    ui.text_edit_singleline(&mut region.label);
-                });
-
-                ui.horizontal(|ui| {
-                    ui.label("Position");
-                    ui.add(
-                        DragValue::new(&mut region.position)
-                            .speed(0.01)
-                            .clamp_range(min_pos..=1.0),
-                    )
-                });
-                min_pos = region.position;
-
-                ui.horizontal(|ui| {
-                    ui.color_edit_button_srgb(&mut region.color);
-                    ui.label("Color");
-                });
-                if i != regions_len - 1 {
-                    ui.separator();
                 }
-            }
+            });
             for i in regions_to_remove {
                 noise_map.regions.remove(i);
             }
