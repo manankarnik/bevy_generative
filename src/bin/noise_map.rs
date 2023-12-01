@@ -150,7 +150,7 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
             });
         if let Some(_function_name) = &noise_map.function.name {
             ui.add(Slider::new(&mut noise_map.function.octaves, 0..=10).text("Octaves"));
-            ui.add(Slider::new(&mut noise_map.function.frequency, 0.0..=0.5).text("Frequency"));
+            ui.add(Slider::new(&mut noise_map.function.frequency, 0.0..=10.0).text("Frequency"));
             ui.add(Slider::new(&mut noise_map.function.lacunarity, 0.0..=30.0).text("Lacunarity"));
             ui.add(
                 Slider::new(&mut noise_map.function.persistence, 0.01..=1.0).text("Persistence"),

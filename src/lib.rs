@@ -15,3 +15,4 @@
 mod noise;
 
 pub mod noise_map;
+pub mod terrain;

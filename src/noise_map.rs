@@ -249,7 +249,12 @@ fn generate_map(
             .colors(&colors)
             .domain(&domain)
             .build()
-            .expect("Gradient generation failed");
+            .unwrap_or(
+                colorgrad::CustomGradient::new()
+                    .colors(&colors)
+                    .build()
+                    .expect("Gradient generation failed"),
+            );
 
         if noise_map.gradient.segments != 0 {
             grad = grad.sharp(noise_map.gradient.segments, noise_map.gradient.smoothness);

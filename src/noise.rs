@@ -114,9 +114,9 @@ fn generate_noise_vector(
 ) -> Vec<Vec<f64>> {
     let mut noise_vector: Vec<Vec<f64>> = Vec::with_capacity(size[0] as usize);
     let noise = noise::Clamp::new(noise).set_bounds(-1.0, 1.0);
-    for i in 0..size[0] {
+    for i in 0..(size[0] + 1) {
         let mut row: Vec<f64> = Vec::with_capacity(size[1] as usize);
-        for j in 0..size[1] {
+        for j in 0..(size[1] + 1) {
             let x = f64::from(i as i32 - (size[0] / 2) as i32) / scale + f64::from(offset[0]);
             let y = f64::from(j as i32 - (size[1] / 2) as i32) / scale + f64::from(offset[1]);
             let value = (noise.get([x, y]) + 1.0) / 2.0 * 100.0;
