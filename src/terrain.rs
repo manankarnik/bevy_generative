@@ -1,6 +1,7 @@
 use bevy::{
     prelude::*,
     render::{
+        color::{self, Color},
         mesh::{self, VertexAttributeValues},
         render_resource::{PrimitiveTopology, TextureFormat},
         texture::ImageSampler,
@@ -78,77 +79,68 @@ fn generate_terrain(
                 .expect("Could not convert to Rgba8UnormSrgb"),
         );
 
-        let mut image_buffer = image::ImageBuffer::from_pixel(
-            noise_map.size[0],
-            noise_map.size[1],
-            image::Rgba(noise_map.base_color),
-        );
-
-        for (x, y, pixel) in image_buffer.enumerate_pixels_mut() {
-            let height = noise_values[x as usize][y as usize];
-            let target_color = grad.at(height).to_rgba8();
-            pixel.blend(&image::Rgba(target_color));
-        }
-        let mut noise_map_texture = Image::from_dynamic(image_buffer.into(), true)
-            .convert(TextureFormat::Rgba8UnormSrgb)
-            .expect("Could not convert to Rgba8UnormSrgb");
-        noise_map_texture.sampler_descriptor = if noise_map.anti_aliasing {
-            ImageSampler::linear()
-        } else {
-            ImageSampler::nearest()
-        };
-
         if let Some(material) = materials.get_mut(material) {
-            material.base_color = Color::WHITE;
-            material.base_color_texture = Some(images.add(noise_map_texture));
+            *material = StandardMaterial::default()
         }
-
-        let vertices_count: usize = ((noise_map.size[0] + 1) * (noise_map.size[1] + 1))
-            .try_into()
-            .unwrap();
-        let triangle_count: usize = (noise_map.size[0] * noise_map.size[1] * 2 * 3)
-            .try_into()
-            .unwrap();
+        let vertices_count: usize = ((noise_map.size[0] + 1) * (noise_map.size[1] + 1)) as usize;
+        let triangle_count: usize = (noise_map.size[0] * noise_map.size[1] * 2 * 3) as usize;
 
         let mut positions: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
         let mut normals: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
         let mut uvs: Vec<[f32; 2]> = Vec::with_capacity(vertices_count);
+        let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
+        let mut colors: Vec<[f32; 4]> = Vec::with_capacity(vertices_count);
 
-        let w = noise_map.size[0] as f32;
-        let d = noise_map.size[1] as f32;
+        let rows = noise_map.size[0] + 1;
+        let cols = noise_map.size[1] + 1;
+        let grid_size = 10.0;
+        for i in 0..rows {
+            for j in 0..cols {
+                let i = i as f32;
+                let j = j as f32;
+                let width = rows as f32;
+                let depth = cols as f32;
+                let x = i / grid_size;
+                let y = (noise_values[i as usize][j as usize] / 100.0) as f32;
+                let z = j / grid_size;
 
-        for u in 0..=noise_map.size[0] {
-            for v in 0..=noise_map.size[1] {
-                let u = u as f32;
-                let v = v as f32;
-                positions.push([
-                    (u - w / 2.0) / w,
-                    noise_values[u as usize][v as usize] as f32 / 100.0,
-                    (v - d / 2.0) / d,
-                ]);
+                let color = grad.at(noise_values[i as usize][j as usize]);
+                let color = [
+                    color.r as f32,
+                    color.g as f32,
+                    color.b as f32,
+                    color.a as f32,
+                ];
+
+                positions.push([x, y, z]);
                 normals.push([0.0, 1.0, 0.0]);
-                uvs.push([u / d, v / d]);
+                uvs.push([i, j]);
+                colors.push(color);
             }
         }
 
-        let mut triangles: Vec<u32> = Vec::with_capacity(triangle_count);
-        for w in 0..noise_map.size[0] {
-            for d in 0..noise_map.size[1] {
-                // First triangle
-                triangles.push((d * (noise_map.size[0] + 1)) + w);
-                triangles.push(((d + 1) * (noise_map.size[0] + 1)) + w + 1);
-                triangles.push(((d + 1) * (noise_map.size[0] + 1)) + w);
+        for i in 0..(rows - 1) {
+            for j in 0..(cols - 1) {
+                let current = i * cols + j;
+                let next_row = (i + 1) * cols + j;
 
-                // Second triangle
-                triangles.push((d * (noise_map.size[0] + 1)) + w);
-                triangles.push((d * (noise_map.size[0] + 1)) + w + 1);
-                triangles.push(((d + 1) * (noise_map.size[0] + 1)) + w + 1);
+                // Triangle 1
+                indices.push(current);
+                indices.push(current + 1);
+                indices.push(next_row);
+
+                // Triangle 2
+                indices.push(next_row);
+                indices.push(current + 1);
+                indices.push(next_row + 1);
             }
         }
+
         let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
-        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(triangles)));
+        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices)));
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
         *mesh_handle = meshes.add(mesh);
     }

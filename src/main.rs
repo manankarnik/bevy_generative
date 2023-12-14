@@ -46,16 +46,13 @@ fn setup(
         },
         PanOrbitCamera::default(),
     ));
-    commands.spawn((
-        TerrainBundle {
-            noise_map: NoiseMap {
-                size: [10, 10],
-                ..default()
-            },
+    commands.spawn(TerrainBundle {
+        noise_map: NoiseMap {
+            size: [100; 2],
             ..default()
         },
-        Wireframe,
-    ));
+        ..default()
+    });
 }
 
 fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
@@ -132,7 +129,6 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
             ui.label("Height");
             ui.add(DragValue::new(&mut noise_map.size[1]).clamp_range(1..=10000));
         });
-        ui.checkbox(&mut noise_map.anti_aliasing, "Anti-aliasing");
         ui.add(Slider::new(&mut noise_map.scale, 1.0..=100.0).text("Scale"));
 
         ComboBox::from_label("Function")
