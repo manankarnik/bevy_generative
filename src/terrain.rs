@@ -1,19 +1,21 @@
 use bevy::{
     prelude::*,
     render::{
-        color::{self, Color},
-        mesh::{self, VertexAttributeValues},
-        render_resource::{PrimitiveTopology, TextureFormat},
-        texture::ImageSampler,
+        render_resource::{PrimitiveTopology},
     },
 };
 use image::Pixel;
 
-use crate::{noise::generate_noise_map, noise_map::NoiseMap};
+use crate::{noise::generate_noise_map, noise::Noise};
+
+#[derive(Component, Default)]
+pub struct Terrain {
+    pub noise: Noise,
+}
 
 #[derive(Bundle, Default)]
 pub struct TerrainBundle {
-    pub noise_map: NoiseMap,
+    pub terrain: Terrain,
     pub pbr_bundle: PbrBundle,
 }
 
@@ -29,14 +31,15 @@ fn generate_terrain(
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&mut NoiseMap, &mut Handle<Mesh>, &Handle<StandardMaterial>)>,
+    mut query: Query<(&mut Terrain, &mut Handle<Mesh>, &Handle<StandardMaterial>)>,
 ) {
-    for (mut noise_map, mut mesh_handle, material) in &mut query {
-        let noise_values = generate_noise_map(&noise_map);
+    for (mut terrain, mut mesh_handle, material) in &mut query {
+        let noise = &mut terrain.noise;
+        let noise_values = generate_noise_map(&noise);
 
-        let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(noise_map.regions.len());
-        let mut domain: Vec<f64> = Vec::with_capacity(noise_map.regions.len());
-        for region in &noise_map.regions {
+        let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(noise.regions.len());
+        let mut domain: Vec<f64> = Vec::with_capacity(noise.regions.len());
+        for region in &noise.regions {
             colors.push(colorgrad::Color {
                 r: region.color[0] as f64 / 255.0,
                 g: region.color[1] as f64 / 255.0,
@@ -56,24 +59,24 @@ fn generate_terrain(
                     .expect("Gradient generation failed"),
             );
 
-        if noise_map.gradient.segments != 0 {
-            grad = grad.sharp(noise_map.gradient.segments, noise_map.gradient.smoothness);
+        if noise.gradient.segments != 0 {
+            grad = grad.sharp(noise.gradient.segments, noise.gradient.smoothness);
         }
 
         let mut gradient_buffer = image::ImageBuffer::from_pixel(
-            noise_map.gradient.size[0],
-            noise_map.gradient.size[1],
-            image::Rgba(noise_map.base_color),
+            noise.gradient.size[0],
+            noise.gradient.size[1],
+            image::Rgba(noise.base_color),
         );
 
         for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
             let rgba = grad
-                .at(x as f64 * 100.0 / noise_map.gradient.size[0] as f64)
+                .at(x as f64 * 100.0 / noise.gradient.size[0] as f64)
                 .to_rgba8();
             pixel.blend(&image::Rgba(rgba));
         }
 
-        noise_map.gradient.image = images.add(
+        noise.gradient.image = images.add(
             Image::from_dynamic(gradient_buffer.into(), true)
                 .convert(bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb)
                 .expect("Could not convert to Rgba8UnormSrgb"),
@@ -82,8 +85,8 @@ fn generate_terrain(
         if let Some(material) = materials.get_mut(material) {
             *material = StandardMaterial::default()
         }
-        let vertices_count: usize = ((noise_map.size[0] + 1) * (noise_map.size[1] + 1)) as usize;
-        let triangle_count: usize = (noise_map.size[0] * noise_map.size[1] * 2 * 3) as usize;
+        let vertices_count: usize = ((noise.size[0] + 1) * (noise.size[1] + 1)) as usize;
+        let triangle_count: usize = (noise.size[0] * noise.size[1] * 2 * 3) as usize;
 
         let mut positions: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
         let mut normals: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
@@ -91,15 +94,15 @@ fn generate_terrain(
         let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
         let mut colors: Vec<[f32; 4]> = Vec::with_capacity(vertices_count);
 
-        let rows = noise_map.size[0] + 1;
-        let cols = noise_map.size[1] + 1;
+        let rows = noise.size[0] + 1;
+        let cols = noise.size[1] + 1;
         let grid_size = 10.0;
         for i in 0..rows {
             for j in 0..cols {
                 let i = i as f32;
                 let j = j as f32;
-                let width = rows as f32;
-                let depth = cols as f32;
+                let _width = rows as f32;
+                let _depth = cols as f32;
                 let x = i / grid_size;
                 let y = (noise_values[i as usize][j as usize] / 100.0) as f32;
                 let z = j / grid_size;

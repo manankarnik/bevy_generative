@@ -12,7 +12,6 @@
 
 //! Procedural generation in bevy
 
-mod noise;
-
+pub mod noise;
 pub mod noise_map;
 pub mod terrain;
