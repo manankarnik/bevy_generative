@@ -39,6 +39,12 @@ fn setup(
     commands.spawn((
         Camera3dBundle {
             transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+            camera_3d: Camera3d {
+                clear_color: bevy::core_pipeline::clear_color::ClearColorConfig::Custom(
+                    Color::BLACK,
+                ),
+                ..default()
+            },
             ..default()
         },
         PanOrbitCamera::default(),
@@ -129,6 +135,7 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
             ui.label("Height");
             ui.add(DragValue::new(&mut terrain.noise.size[1]).clamp_range(1..=10000));
         });
+        ui.checkbox(&mut terrain.wireframe, "Wireframe");
         ui.add(Slider::new(&mut terrain.noise.scale, 1.0..=100.0).text("Scale"));
 
         ComboBox::from_label("Function")

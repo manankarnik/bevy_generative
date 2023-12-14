@@ -1,16 +1,21 @@
-use bevy::{
-    prelude::*,
-    render::{
-        render_resource::{PrimitiveTopology},
-    },
-};
+use bevy::{prelude::*, render::render_resource::PrimitiveTopology};
 use image::Pixel;
 
 use crate::{noise::generate_noise_map, noise::Noise};
 
-#[derive(Component, Default)]
+#[derive(Component)]
 pub struct Terrain {
     pub noise: Noise,
+    pub wireframe: bool,
+}
+
+impl Default for Terrain {
+    fn default() -> Self {
+        Self {
+            noise: Noise::default(),
+            wireframe: false,
+        }
+    }
 }
 
 #[derive(Bundle, Default)]
@@ -139,7 +144,22 @@ fn generate_terrain(
             }
         }
 
-        let mut mesh = Mesh::new(PrimitiveTopology::TriangleList);
+        if terrain.wireframe {
+            let triangle_number = indices.len() / 3;
+            let cloned_indices = indices.clone();
+            indices = vec![];
+            for i in 0..triangle_number {
+                for j in &[0, 1, 1, 2, 2, 0] {
+                    indices.push(cloned_indices[i * 3 + j]);
+                }
+            }
+        }
+
+        let mut mesh = if terrain.wireframe {
+            Mesh::new(PrimitiveTopology::LineList)
+        } else {
+            Mesh::new(PrimitiveTopology::TriangleList)
+        };
         mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices)));
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);

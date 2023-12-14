@@ -20,7 +20,13 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    commands.spawn(Camera2dBundle {
+        camera_2d: Camera2d {
+            clear_color: bevy::core_pipeline::clear_color::ClearColorConfig::Custom(Color::BLACK),
+            ..default()
+        },
+        ..default()
+    });
     commands
         .spawn(NodeBundle {
             style: Style {
