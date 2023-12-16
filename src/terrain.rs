@@ -1,12 +1,23 @@
-use bevy::{prelude::*, render::render_resource::PrimitiveTopology};
+use bevy::{
+    prelude::*,
+    render::{
+        mesh::{Indices, VertexAttributeValues},
+        render_resource::{PrimitiveTopology, TextureFormat},
+    },
+};
 use image::Pixel;
 
-use crate::{noise::generate_noise_map, noise::Noise};
+use crate::{
+    noise::generate_noise_map,
+    noise::Noise,
+    util::{self, export},
+};
 
 #[derive(Component)]
 pub struct Terrain {
     pub noise: Noise,
     pub wireframe: bool,
+    pub export: bool,
 }
 
 impl Default for Terrain {
@@ -14,6 +25,7 @@ impl Default for Terrain {
         Self {
             noise: Noise::default(),
             wireframe: false,
+            export: false,
         }
     }
 }
@@ -83,7 +95,7 @@ fn generate_terrain(
 
         noise.gradient.image = images.add(
             Image::from_dynamic(gradient_buffer.into(), true)
-                .convert(bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb)
+                .convert(TextureFormat::Rgba8UnormSrgb)
                 .expect("Could not convert to Rgba8UnormSrgb"),
         );
 
@@ -106,11 +118,11 @@ fn generate_terrain(
             for j in 0..cols {
                 let i = i as f32;
                 let j = j as f32;
-                let _width = rows as f32;
-                let _depth = cols as f32;
-                let x = i / grid_size;
+                let width = rows as f32;
+                let depth = cols as f32;
+                let x = i / grid_size - width / (grid_size * 2.0);
                 let y = (noise_values[i as usize][j as usize] / 100.0) as f32;
-                let z = j / grid_size;
+                let z = j / grid_size - depth / (grid_size * 2.0);
 
                 let color = grad.at(noise_values[i as usize][j as usize]);
                 let color = [
@@ -160,11 +172,16 @@ fn generate_terrain(
         } else {
             Mesh::new(PrimitiveTopology::TriangleList)
         };
-        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices)));
-        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions);
+        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices.clone())));
+        mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
-        mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors);
+        mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
         *mesh_handle = meshes.add(mesh);
+
+        if (terrain.export) {
+            terrain.export = false;
+            export(positions, indices, colors);
+        }
     }
 }

@@ -1,4 +1,8 @@
-use bevy::{pbr::wireframe::WireframePlugin, prelude::*};
+use bevy::{
+    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
+    pbr::wireframe::WireframePlugin,
+    prelude::*,
+};
 use bevy_egui::{
     egui::{self, RichText},
     EguiContexts, EguiPlugin,
@@ -30,10 +34,10 @@ fn setup(
     commands.spawn(PointLightBundle {
         point_light: PointLight {
             intensity: 1500.0,
-            shadows_enabled: true,
+            shadows_enabled: false,
             ..default()
         },
-        transform: Transform::from_xyz(4.0, 8.0, 4.0),
+        transform: Transform::from_xyz(0.0, 10.0, 0.0),
         ..default()
     });
     commands.spawn((
@@ -45,6 +49,15 @@ fn setup(
                 ),
                 ..default()
             },
+            camera: Camera {
+                hdr: true,
+                ..default()
+            },
+            tonemapping: Tonemapping::TonyMcMapface,
+            ..default()
+        },
+        BloomSettings {
+            intensity: 0.4,
             ..default()
         },
         PanOrbitCamera::default(),
@@ -63,6 +76,7 @@ fn setup(
 
 fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
     let mut terrain = query.single_mut();
+
     let texture_id = contexts.add_image(terrain.noise.gradient.image.clone_weak());
     let mut min_pos = 0.0;
 
@@ -186,13 +200,13 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
             );
         }
         ui.group(|ui| {
-            ui.add(egui::widgets::Image::new(
+            ui.add(egui::widgets::Image::new(egui::load::SizedTexture::new(
                 texture_id,
                 [
                     terrain.noise.gradient.size[0] as f32,
                     terrain.noise.gradient.size[1] as f32,
                 ],
-            ));
+            )));
             ui.add(
                 Slider::new(&mut terrain.noise.gradient.smoothness, 0.0..=1.0).text("Smoothness"),
             );
@@ -249,5 +263,9 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
                 terrain.noise.regions.remove(i);
             }
         });
+
+        if ui.button("Export").clicked() {
+            terrain.export = true
+        }
     });
 }

@@ -172,13 +172,13 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
             );
         }
         ui.group(|ui| {
-            ui.add(egui::widgets::Image::new(
+            ui.add(egui::widgets::Image::new(egui::load::SizedTexture::new(
                 texture_id,
                 [
                     noise_map.noise.gradient.size[0] as f32,
                     noise_map.noise.gradient.size[1] as f32,
                 ],
-            ));
+            )));
             ui.add(
                 Slider::new(&mut noise_map.noise.gradient.smoothness, 0.0..=1.0).text("Smoothness"),
             );

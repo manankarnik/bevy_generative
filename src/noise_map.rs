@@ -24,7 +24,6 @@ use bevy::{
 };
 use image::Pixel;
 
-
 use crate::noise::{generate_noise_map, Noise};
 
 /// Plugin to generate noise map
@@ -129,7 +128,7 @@ fn generate_map(
         let mut noise_map_texture = Image::from_dynamic(image_buffer.into(), true)
             .convert(TextureFormat::Rgba8UnormSrgb)
             .expect("Could not convert to Rgba8UnormSrgb");
-        noise_map_texture.sampler_descriptor = if noise_map.anti_aliasing {
+        noise_map_texture.sampler = if noise_map.anti_aliasing {
             ImageSampler::linear()
         } else {
             ImageSampler::nearest()
