@@ -1,5 +1,5 @@
 mod gltf;
-use gltf::{Output, Vertex};
+use gltf::{export_gltf, Output, Vertex};
 
 pub fn export(positions: Vec<[f32; 3]>, indices: Vec<u32>, colors: Vec<[f32; 4]>) {
     let mut vertices: Vec<Vertex> = vec![];
@@ -14,5 +14,5 @@ pub fn export(positions: Vec<[f32; 3]>, indices: Vec<u32>, colors: Vec<[f32; 4]>
             ],
         });
     }
-    gltf::export(Output::Binary, vertices);
+    export_gltf(Output::Binary, vertices);
 }

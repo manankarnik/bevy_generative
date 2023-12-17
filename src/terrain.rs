@@ -7,11 +7,7 @@ use bevy::{
 };
 use image::Pixel;
 
-use crate::{
-    noise::generate_noise_map,
-    noise::Noise,
-    util::{self, export},
-};
+use crate::{noise::generate_noise_map, noise::Noise, util::export};
 
 #[derive(Component)]
 pub struct Terrain {
@@ -179,9 +175,9 @@ fn generate_terrain(
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
         *mesh_handle = meshes.add(mesh);
 
-        if (terrain.export) {
-            terrain.export = false;
+        if terrain.export {
             export(positions, indices, colors);
+            terrain.export = false;
         }
     }
 }

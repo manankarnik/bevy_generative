@@ -14,6 +14,25 @@ use bevy_generative::{
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};
 use egui::{ComboBox, DragValue, Slider};
 
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                canvas: Some("#bevy-canvas".into()),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugins(EguiPlugin)
+        .add_plugins(WireframePlugin)
+        .add_plugins(PanOrbitCameraPlugin)
+        .add_plugins(TerrainPlugin)
+        .add_systems(Startup, setup)
+        .add_systems(Update, gui)
+        .run();
+}
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -90,6 +109,11 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
         });
         ui.heading("Config");
         ui.separator();
+
+        if ui.button("Export").clicked() {
+            terrain.export = true
+        }
+
         ComboBox::from_label("Method")
             .selected_text(terrain.noise.method.to_string())
             .show_ui(ui, |ui| {
@@ -263,9 +287,5 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
                 terrain.noise.regions.remove(i);
             }
         });
-
-        if ui.button("Export").clicked() {
-            terrain.export = true
-        }
     });
 }
