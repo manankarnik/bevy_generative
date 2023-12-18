@@ -17,7 +17,7 @@ use std::io::Write;
 
 #[wasm_bindgen(module = "/src/util/save.js")]
 extern "C" {
-    fn save(data: &[u8]);
+    fn save(data: &[u8], filename: &str, r#type: &str);
 }
 
 #[derive(Clone, Copy, Debug, Eq, Hash, PartialEq)]
@@ -205,7 +205,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
             #[cfg(target_arch = "wasm32")]
             {
                 let buffer = glb.to_vec().expect("glTF binary output error");
-                save(&buffer);
+                save(&buffer, "model.glb", "model/gtlf-binary");
             }
             #[cfg(not(target_arch = "wasm32"))]
             if let Some(file_path) = FileDialog::new().save_file() {

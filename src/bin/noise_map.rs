@@ -9,6 +9,24 @@ use bevy_generative::{
 };
 use egui::{ComboBox, DragValue, Slider};
 
+#[cfg(target_arch = "wasm32")]
+fn main() {
+    App::new()
+        .add_plugins(DefaultPlugins.set(WindowPlugin {
+            primary_window: Some(Window {
+                canvas: Some("#bevy-canvas".into()),
+                ..default()
+            }),
+            ..default()
+        }))
+        .add_plugins(EguiPlugin)
+        .add_plugins(NoiseMapPlugin)
+        .add_systems(Startup, setup)
+        .add_systems(Update, gui)
+        .run();
+}
+
+#[cfg(not(target_arch = "wasm32"))]
 fn main() {
     App::new()
         .add_plugins(DefaultPlugins)
@@ -59,6 +77,11 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
         });
         ui.heading("Config");
         ui.separator();
+
+        if ui.button("Export").clicked() {
+            noise_map.export = true
+        }
+
         ComboBox::from_label("Method")
             .selected_text(noise_map.noise.method.to_string())
             .show_ui(ui, |ui| {

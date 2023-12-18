@@ -22,9 +22,12 @@ use bevy::{
     prelude::*,
     render::{render_resource::TextureFormat, texture::ImageSampler},
 };
-use image::Pixel;
+use image::{DynamicImage, Pixel};
 
-use crate::noise::{generate_noise_map, Noise};
+use crate::{
+    noise::{generate_noise_map, Noise},
+    util::export_asset,
+};
 
 /// Plugin to generate noise map
 pub struct NoiseMapPlugin;
@@ -42,6 +45,7 @@ pub struct NoiseMap {
     pub noise: Noise,
     /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
     pub anti_aliasing: bool,
+    pub export: bool,
 }
 
 /// Display `NoiseMap` as a ui node
@@ -58,6 +62,7 @@ impl Default for NoiseMap {
         Self {
             noise: Noise::default(),
             anti_aliasing: true,
+            export: false,
         }
     }
 }
@@ -125,7 +130,7 @@ fn generate_map(
             let target_color = grad.at(height).to_rgba8();
             pixel.blend(&image::Rgba(target_color));
         }
-        let mut noise_map_texture = Image::from_dynamic(image_buffer.into(), true)
+        let mut noise_map_texture = Image::from_dynamic(image_buffer.clone().into(), true)
             .convert(TextureFormat::Rgba8UnormSrgb)
             .expect("Could not convert to Rgba8UnormSrgb");
         noise_map_texture.sampler = if noise_map.anti_aliasing {
@@ -134,5 +139,10 @@ fn generate_map(
             ImageSampler::nearest()
         };
         ui_image.texture = images.add(noise_map_texture);
+
+        if noise_map.export {
+            export_asset(image_buffer);
+            noise_map.export = false;
+        }
     }
 }

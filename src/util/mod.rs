@@ -1,7 +1,47 @@
 mod gltf;
 use gltf::{export_gltf, Output, Vertex};
+use image::{codecs::png::PngEncoder, save_buffer, ColorType, DynamicImage, ImageBuffer, Rgba};
+#[cfg(not(target_arch = "wasm32"))]
+use rfd::FileDialog;
+use wasm_bindgen::prelude::wasm_bindgen;
 
-pub fn export(positions: Vec<[f32; 3]>, indices: Vec<u32>, colors: Vec<[f32; 4]>) {
+#[wasm_bindgen(module = "/src/util/save.js")]
+extern "C" {
+    fn save(data: &[u8], filename: &str, r#type: &str);
+}
+
+pub fn export_asset(image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>) {
+    #[cfg(target_arch = "wasm32")]
+    {
+        let mut png_buffer: Vec<u8> = vec![];
+        let png_encoder = PngEncoder::new(&mut png_buffer);
+        let color_type = DynamicImage::from(image_buffer.clone()).color();
+        png_encoder
+            .encode(
+                &image_buffer,
+                image_buffer.width(),
+                image_buffer.height(),
+                color_type,
+            )
+            .expect("Failed to write to png");
+
+        save(&png_buffer, "asset.png", "image/png");
+    }
+    #[cfg(not(target_arch = "wasm32"))]
+    {
+        if let Some(file_path) = FileDialog::new().save_file() {
+            save_buffer(
+                file_path,
+                &image_buffer.to_vec(),
+                image_buffer.width(),
+                image_buffer.height(),
+                DynamicImage::from(image_buffer).color(),
+            );
+        }
+    }
+}
+
+pub fn export_terrain(positions: Vec<[f32; 3]>, indices: Vec<u32>, colors: Vec<[f32; 4]>) {
     let mut vertices: Vec<Vertex> = vec![];
 
     for i in indices {
