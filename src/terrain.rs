@@ -51,6 +51,9 @@ fn generate_terrain(
     mut query: Query<(&mut Terrain, &mut Handle<Mesh>, &Handle<StandardMaterial>)>,
 ) {
     for (mut terrain, mut mesh_handle, material) in &mut query {
+        if let Some(material) = materials.get_mut(material) {
+            *material = StandardMaterial::default()
+        }
         let noise = &mut terrain.noise;
         let noise_values = generate_noise_map(&noise);
 
@@ -99,9 +102,6 @@ fn generate_terrain(
                 .expect("Could not convert to Rgba8UnormSrgb"),
         );
 
-        if let Some(material) = materials.get_mut(material) {
-            *material = StandardMaterial::default()
-        }
         let vertices_count: usize = ((noise.size[0] + 1) * (noise.size[1] + 1)) as usize;
         let triangle_count: usize = (noise.size[0] * noise.size[1] * 2 * 3) as usize;
 

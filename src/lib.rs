@@ -16,4 +16,5 @@ mod util;
 
 pub mod noise;
 pub mod noise_map;
+pub mod planet;
 pub mod terrain;
