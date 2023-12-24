@@ -13,6 +13,8 @@ use crate::{noise::generate_noise_map, noise::Noise, util::export_terrain};
 pub struct Terrain {
     pub noise: Noise,
     pub wireframe: bool,
+    pub height_exponent: f32,
+    pub sea_level: f32,
     pub export: bool,
 }
 
@@ -21,6 +23,8 @@ impl Default for Terrain {
         Self {
             noise: Noise::default(),
             wireframe: false,
+            height_exponent: 1.0,
+            sea_level: 10.0,
             export: false,
         }
     }
@@ -117,7 +121,12 @@ fn generate_terrain(
                 let width = rows as f32;
                 let depth = cols as f32;
                 let x = i / grid_size - width / (grid_size * 2.0);
-                let y = (noise_values[i as usize][j as usize] / 100.0) as f32;
+                let y = if noise_values[i as usize][j as usize] > terrain.sea_level.into() {
+                    (noise_values[i as usize][j as usize] * 5.0 / 100.0)
+                        .powf(terrain.height_exponent.into()) as f32
+                } else {
+                    (terrain.sea_level * 5.0 / 100.0).powf(terrain.height_exponent)
+                };
                 let z = j / grid_size - depth / (grid_size * 2.0);
 
                 let color = grad.at(noise_values[i as usize][j as usize]);

@@ -1,8 +1,4 @@
-use bevy::{
-    core_pipeline::{bloom::BloomSettings, tonemapping::Tonemapping},
-    pbr::wireframe::WireframePlugin,
-    prelude::*,
-};
+use bevy::{pbr::wireframe::WireframePlugin, prelude::*};
 use bevy_egui::{
     egui::{self, RichText},
     EguiContexts, EguiPlugin,
@@ -45,18 +41,14 @@ fn main() {
         .run();
 }
 
-fn setup(
-    mut commands: Commands,
-    _meshes: ResMut<Assets<Mesh>>,
-    _materials: ResMut<Assets<StandardMaterial>>,
-) {
-    commands.spawn(PointLightBundle {
-        point_light: PointLight {
-            intensity: 1500.0,
-            shadows_enabled: false,
+fn setup(mut commands: Commands) {
+    commands.spawn(DirectionalLightBundle {
+        directional_light: DirectionalLight {
+            color: Color::WHITE,
+            illuminance: 10000.0,
             ..default()
         },
-        transform: Transform::from_xyz(0.0, 10.0, 0.0),
+        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
         ..default()
     });
     commands.spawn((
@@ -68,15 +60,6 @@ fn setup(
                 ),
                 ..default()
             },
-            camera: Camera {
-                hdr: true,
-                ..default()
-            },
-            tonemapping: Tonemapping::TonyMcMapface,
-            ..default()
-        },
-        BloomSettings {
-            intensity: 0.4,
             ..default()
         },
         PanOrbitCamera::default(),
@@ -242,6 +225,8 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
                 ui.label("Base Color");
                 ui.color_edit_button_srgba_unmultiplied(&mut terrain.noise.base_color);
             });
+            ui.add(Slider::new(&mut terrain.height_exponent, 0.1..=2.5).text("Height Exponent"));
+            ui.add(Slider::new(&mut terrain.sea_level, 0.0..=100.0).text("Sea Level"));
             ui.separator();
             if ui.button("Add Region").clicked() {
                 let index = terrain.noise.regions.len() + 1;
