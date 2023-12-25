@@ -6,16 +6,14 @@ use bevy::{
     render::render_resource::PrimitiveTopology,
 };
 
-use crate::{
-    noise::{Noise},
-    util::export_terrain,
-};
+use crate::{noise::Noise, util::export_terrain};
 
 use noise::{Fbm, NoiseFn, Perlin};
 
 #[derive(Component)]
 pub struct Planet {
     pub noise: Noise,
+    pub resolution: u32,
     pub wireframe: bool,
     pub height_exponent: f32,
     pub sea_level: f32,
@@ -26,6 +24,7 @@ impl Default for Planet {
     fn default() -> Self {
         Self {
             noise: Noise::default(),
+            resolution: 10,
             wireframe: false,
             height_exponent: 1.0,
             sea_level: 10.0,
@@ -74,7 +73,7 @@ fn generate_planet(
             Vec3::Z,
             Vec3::NEG_Z,
         ] {
-            let (p, mut i, n, u, c) = generate_face(noise.size[0].min(noise.size[1]), direction);
+            let (p, mut i, n, u, c) = generate_face(planet.resolution, direction);
             positions.extend(p);
             i = i.iter().map(|index| index + index_start).collect();
             index_start = i.iter().max().unwrap_or(&0) + 1;

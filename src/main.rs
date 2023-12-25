@@ -64,16 +64,7 @@ fn setup(mut commands: Commands) {
         },
         PanOrbitCamera::default(),
     ));
-    commands.spawn(PlanetBundle {
-        planet: Planet {
-            noise: Noise {
-                size: [2; 2],
-                ..default()
-            },
-            ..default()
-        },
-        ..default()
-    });
+    commands.spawn(PlanetBundle::default());
 }
 
 fn gui(mut contexts: EguiContexts, mut query: Query<&mut Planet>) {
@@ -149,12 +140,8 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Planet>) {
             ui.add(DragValue::new(&mut planet.noise.offset[1]));
         });
         ui.horizontal(|ui| {
-            ui.label("Width");
-            ui.add(DragValue::new(&mut planet.noise.size[0]).clamp_range(1..=10000));
-        });
-        ui.horizontal(|ui| {
-            ui.label("Height");
-            ui.add(DragValue::new(&mut planet.noise.size[1]).clamp_range(1..=10000));
+            ui.label("Resolution");
+            ui.add(DragValue::new(&mut planet.resolution).clamp_range(1..=10000));
         });
         ui.checkbox(&mut planet.wireframe, "Wireframe");
         ui.add(Slider::new(&mut planet.noise.scale, 1.0..=100.0).text("Scale"));

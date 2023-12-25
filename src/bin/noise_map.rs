@@ -135,11 +135,11 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut NoiseMap>) {
         });
         ui.horizontal(|ui| {
             ui.label("Width");
-            ui.add(DragValue::new(&mut noise_map.noise.size[0]).clamp_range(1..=10000));
+            ui.add(DragValue::new(&mut noise_map.size[0]).clamp_range(1..=10000));
         });
         ui.horizontal(|ui| {
             ui.label("Height");
-            ui.add(DragValue::new(&mut noise_map.noise.size[1]).clamp_range(1..=10000));
+            ui.add(DragValue::new(&mut noise_map.size[1]).clamp_range(1..=10000));
         });
         ui.checkbox(&mut noise_map.anti_aliasing, "Anti-aliasing");
         ui.add(Slider::new(&mut noise_map.noise.scale, 1.0..=100.0).text("Scale"));

@@ -3,7 +3,7 @@
     clippy::pedantic,
     clippy::nursery,
     clippy::cargo,
-    // missing_docs
+    missing_docs
 )]
 #![allow(clippy::cast_precision_loss)]
 #![allow(clippy::cast_possible_truncation)]

@@ -22,7 +22,7 @@ use bevy::{
     prelude::*,
     render::{render_resource::TextureFormat, texture::ImageSampler},
 };
-use image::{Pixel};
+use image::Pixel;
 
 use crate::{
     noise::{generate_noise_map, Noise},
@@ -43,6 +43,7 @@ impl Plugin for NoiseMapPlugin {
 pub struct NoiseMap {
     /// Noise configuration of the noise map
     pub noise: Noise,
+    pub size: [u32; 2],
     /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
     pub anti_aliasing: bool,
     pub export: bool,
@@ -61,6 +62,7 @@ impl Default for NoiseMap {
     fn default() -> Self {
         Self {
             noise: Noise::default(),
+            size: [100; 2],
             anti_aliasing: true,
             export: false,
         }
@@ -71,6 +73,7 @@ fn generate_map(
     mut query: Query<(&mut UiImage, &mut NoiseMap)>,
 ) {
     for (mut ui_image, mut noise_map) in &mut query {
+        noise_map.noise.size = noise_map.size;
         let noise_values = generate_noise_map(&noise_map.noise);
         let noise = &mut noise_map.noise;
 
