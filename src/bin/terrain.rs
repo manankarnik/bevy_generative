@@ -64,16 +64,7 @@ fn setup(mut commands: Commands) {
         },
         PanOrbitCamera::default(),
     ));
-    commands.spawn(TerrainBundle {
-        terrain: Terrain {
-            noise: Noise {
-                size: [100; 2],
-                ..default()
-            },
-            ..default()
-        },
-        ..default()
-    });
+    commands.spawn(TerrainBundle::default());
 }
 
 fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
@@ -150,14 +141,18 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
         });
         ui.horizontal(|ui| {
             ui.label("Width");
-            ui.add(DragValue::new(&mut terrain.noise.size[0]).clamp_range(1..=10000));
+            ui.add(DragValue::new(&mut terrain.size[0]).clamp_range(1..=10000));
         });
         ui.horizontal(|ui| {
             ui.label("Height");
-            ui.add(DragValue::new(&mut terrain.noise.size[1]).clamp_range(1..=10000));
+            ui.add(DragValue::new(&mut terrain.size[1]).clamp_range(1..=10000));
         });
         ui.checkbox(&mut terrain.wireframe, "Wireframe");
-        ui.add(Slider::new(&mut terrain.noise.scale, 1.0..=100.0).text("Scale"));
+        ui.horizontal(|ui| {
+            ui.label("Scale");
+            ui.add(DragValue::new(&mut terrain.noise.scale).clamp_range(1..=100));
+        });
+        ui.add(Slider::new(&mut terrain.resolution, 1..=50).text("Resolution"));
 
         ComboBox::from_label("Function")
             .selected_text(if let Some(function_name) = &terrain.noise.function.name {
@@ -225,7 +220,7 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
                 ui.label("Base Color");
                 ui.color_edit_button_srgba_unmultiplied(&mut terrain.noise.base_color);
             });
-            ui.add(Slider::new(&mut terrain.height_exponent, 0.1..=2.5).text("Height Exponent"));
+            ui.add(Slider::new(&mut terrain.height_exponent, 0.1..=10.0).text("Height Exponent"));
             ui.add(Slider::new(&mut terrain.sea_level, 0.0..=100.0).text("Sea Level"));
             ui.separator();
             if ui.button("Add Region").clicked() {

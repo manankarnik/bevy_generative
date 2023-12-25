@@ -12,6 +12,9 @@ use crate::{noise::generate_noise_map, noise::Noise, util::export_terrain};
 #[derive(Component)]
 pub struct Terrain {
     pub noise: Noise,
+    // Size of the terrain
+    pub size: [u32; 2],
+    pub resolution: u32,
     pub wireframe: bool,
     pub height_exponent: f32,
     pub sea_level: f32,
@@ -22,6 +25,8 @@ impl Default for Terrain {
     fn default() -> Self {
         Self {
             noise: Noise::default(),
+            size: [2; 2],
+            resolution: 10,
             wireframe: false,
             height_exponent: 1.0,
             sea_level: 10.0,
@@ -54,12 +59,15 @@ fn generate_terrain(
         if let Some(material) = materials.get_mut(material) {
             *material = StandardMaterial::default()
         }
-        let noise = &mut terrain.noise;
-        let noise_values = generate_noise_map(&noise);
+        terrain.noise.size = [
+            terrain.size[0] * terrain.resolution,
+            terrain.size[1] * terrain.resolution,
+        ];
+        let noise_values = generate_noise_map(&terrain.noise);
 
-        let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(noise.regions.len());
-        let mut domain: Vec<f64> = Vec::with_capacity(noise.regions.len());
-        for region in &noise.regions {
+        let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(terrain.noise.regions.len());
+        let mut domain: Vec<f64> = Vec::with_capacity(terrain.noise.regions.len());
+        for region in &terrain.noise.regions {
             colors.push(colorgrad::Color {
                 r: region.color[0] as f64 / 255.0,
                 g: region.color[1] as f64 / 255.0,
@@ -79,31 +87,36 @@ fn generate_terrain(
                     .expect("Gradient generation failed"),
             );
 
-        if noise.gradient.segments != 0 {
-            grad = grad.sharp(noise.gradient.segments, noise.gradient.smoothness);
+        if terrain.noise.gradient.segments != 0 {
+            grad = grad.sharp(
+                terrain.noise.gradient.segments,
+                terrain.noise.gradient.smoothness,
+            );
         }
 
         let mut gradient_buffer = image::ImageBuffer::from_pixel(
-            noise.gradient.size[0],
-            noise.gradient.size[1],
-            image::Rgba(noise.base_color),
+            terrain.noise.gradient.size[0],
+            terrain.noise.gradient.size[1],
+            image::Rgba(terrain.noise.base_color),
         );
 
         for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
             let rgba = grad
-                .at(x as f64 * 100.0 / noise.gradient.size[0] as f64)
+                .at(x as f64 * 100.0 / terrain.noise.gradient.size[0] as f64)
                 .to_rgba8();
             pixel.blend(&image::Rgba(rgba));
         }
 
-        noise.gradient.image = images.add(
+        terrain.noise.gradient.image = images.add(
             Image::from_dynamic(gradient_buffer.into(), true)
                 .convert(TextureFormat::Rgba8UnormSrgb)
                 .expect("Could not convert to Rgba8UnormSrgb"),
         );
 
-        let vertices_count: usize = ((noise.size[0] + 1) * (noise.size[1] + 1)) as usize;
-        let triangle_count: usize = (noise.size[0] * noise.size[1] * 2 * 3) as usize;
+        let vertices_count: usize =
+            ((terrain.noise.size[0] + 1) * (terrain.noise.size[1] + 1)) as usize;
+        let triangle_count: usize =
+            (terrain.noise.size[0] * terrain.noise.size[1] * 2 * 3) as usize;
 
         let mut positions: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
         let mut normals: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
@@ -111,23 +124,21 @@ fn generate_terrain(
         let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
         let mut colors: Vec<[f32; 4]> = Vec::with_capacity(vertices_count);
 
-        let rows = noise.size[0] + 1;
-        let cols = noise.size[1] + 1;
-        let grid_size = 10.0;
+        let rows = terrain.size[0] * terrain.resolution + 1;
+        let cols = terrain.size[1] * terrain.resolution + 1;
+        let width = terrain.size[0] as f32 + 1.0;
+        let depth = terrain.size[1] as f32 + 1.0;
         for i in 0..rows {
             for j in 0..cols {
                 let i = i as f32;
                 let j = j as f32;
-                let width = rows as f32;
-                let depth = cols as f32;
-                let x = i / grid_size - width / (grid_size * 2.0);
-                let y = if noise_values[i as usize][j as usize] > terrain.sea_level.into() {
-                    (noise_values[i as usize][j as usize] * 5.0 / 100.0)
-                        .powf(terrain.height_exponent.into()) as f32
-                } else {
-                    (terrain.sea_level * 5.0 / 100.0).powf(terrain.height_exponent)
-                };
-                let z = j / grid_size - depth / (grid_size * 2.0);
+                let noise_value = noise_values[i as usize][j as usize] as f32;
+                let height_value = ((noise_value.max(terrain.sea_level)) / 100.0);
+                let x = (i as f32 / terrain.resolution as f32 - width / 2.0) + 0.5;
+                let y = ((height_value.powf(terrain.height_exponent * 1.2) - 0.5) * 2.0)
+                    .min(1.0)
+                    .max(-1.0);
+                let z = (j as f32 / terrain.resolution as f32 - depth / 2.0) + 0.5;
 
                 let color = grad.at(noise_values[i as usize][j as usize]);
                 let color = [

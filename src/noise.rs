@@ -126,8 +126,7 @@ impl Default for Gradient {
 }
 
 pub struct Noise {
-    /// Size of the noise
-    pub size: [u32; 2],
+    pub(crate) size: [u32; 2],
     /// Seed of the noise
     pub seed: u32,
     /// Scale of the noise
