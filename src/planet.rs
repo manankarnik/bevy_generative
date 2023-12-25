@@ -1,33 +1,67 @@
 use bevy::{
+    ecs::query,
     prelude::{
-        App, Assets, Bundle, Component, Handle, Mesh, PbrBundle, Plugin, Query, ResMut,
+        App, Assets, Bundle, Component, Handle, Image, Mesh, PbrBundle, Plugin, Query, ResMut,
         StandardMaterial, Update, Vec3,
     },
-    render::render_resource::PrimitiveTopology,
+    render::render_resource::{PrimitiveTopology, TextureFormat},
 };
+use colorgrad::CustomGradient;
+use image::Pixel;
 
-use crate::{noise::Noise, util::export_terrain};
-
-use noise::{Fbm, NoiseFn, Perlin};
+use crate::{
+    noise::{get_noise_at_point_3d, Function, Gradient, Method, Region},
+    util::export_terrain,
+};
 
 #[derive(Component)]
 pub struct Planet {
-    pub noise: Noise,
+    pub seed: u32,
+    pub scale: f64,
+    pub offset: [f64; 3],
+    pub method: Method,
+    pub function: Function,
     pub resolution: u32,
+    pub gradient: Gradient,
+    pub base_color: [u8; 4],
+    pub regions: Vec<Region>,
     pub wireframe: bool,
     pub height_exponent: f32,
-    pub sea_level: f32,
+    pub sea_percent: f32,
     pub export: bool,
 }
 
 impl Default for Planet {
     fn default() -> Self {
         Self {
-            noise: Noise::default(),
+            seed: 0,
+            scale: 1.0,
+            offset: [0.0; 3],
+            method: Method::Perlin,
+            function: Function::default(),
             resolution: 10,
+            regions: vec![
+                Region {
+                    label: "Sand".to_string(),
+                    color: [242, 241, 199, 255],
+                    position: 0.0,
+                },
+                Region {
+                    label: "Grass".to_string(),
+                    color: [24, 148, 67, 255],
+                    position: 50.0,
+                },
+                Region {
+                    label: "Forest".to_string(),
+                    color: [10, 82, 35, 255],
+                    position: 100.0,
+                },
+            ],
+            gradient: Gradient::default(),
+            base_color: [255, 255, 255, 255],
             wireframe: false,
             height_exponent: 1.0,
-            sea_level: 10.0,
+            sea_percent: 10.0,
             export: false,
         }
     }
@@ -48,6 +82,7 @@ impl Plugin for PlanetPlugin {
 }
 
 fn generate_planet(
+    mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
     mut query: Query<(&mut Planet, &mut Handle<Mesh>, &Handle<StandardMaterial>)>,
@@ -57,7 +92,8 @@ fn generate_planet(
             *material = StandardMaterial::default()
         }
 
-        let noise = &mut planet.noise;
+        let grad = generate_gradient(&mut images, &mut planet);
+
         let mut positions: Vec<[f32; 3]> = vec![];
         let mut indices: Vec<u32> = vec![];
         let mut normals: Vec<[f32; 3]> = vec![];
@@ -73,7 +109,7 @@ fn generate_planet(
             Vec3::Z,
             Vec3::NEG_Z,
         ] {
-            let (p, mut i, n, u, c) = generate_face(planet.resolution, direction);
+            let (p, mut i, n, u, c) = generate_face(&planet, direction, &grad);
             positions.extend(p);
             i = i.iter().map(|index| index + index_start).collect();
             index_start = i.iter().max().unwrap_or(&0) + 1;
@@ -113,9 +149,61 @@ fn generate_planet(
     }
 }
 
+fn generate_gradient(
+    mut images: &mut ResMut<Assets<Image>>,
+    planet: &mut Planet,
+) -> colorgrad::Gradient {
+    let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(planet.regions.len());
+    let mut domain: Vec<f64> = Vec::with_capacity(planet.regions.len());
+    for region in &planet.regions {
+        colors.push(colorgrad::Color {
+            r: region.color[0] as f64 / 255.0,
+            g: region.color[1] as f64 / 255.0,
+            b: region.color[2] as f64 / 255.0,
+            a: region.color[3] as f64 / 255.0,
+        });
+        domain.push(region.position);
+    }
+    let mut grad = colorgrad::CustomGradient::new()
+        .colors(&colors)
+        .domain(&domain)
+        .build()
+        .unwrap_or(
+            colorgrad::CustomGradient::new()
+                .colors(&colors)
+                .build()
+                .expect("Gradient generation failed"),
+        );
+
+    if planet.gradient.segments != 0 {
+        grad = grad.sharp(planet.gradient.segments, planet.gradient.smoothness);
+    }
+
+    let mut gradient_buffer = image::ImageBuffer::from_pixel(
+        planet.gradient.size[0],
+        planet.gradient.size[1],
+        image::Rgba(planet.base_color),
+    );
+
+    for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
+        let rgba = grad
+            .at(x as f64 * 100.0 / planet.gradient.size[0] as f64)
+            .to_rgba8();
+        pixel.blend(&image::Rgba(rgba));
+    }
+
+    planet.gradient.image = images.add(
+        Image::from_dynamic(gradient_buffer.into(), true)
+            .convert(TextureFormat::Rgba8UnormSrgb)
+            .expect("Could not convert to Rgba8UnormSrgb"),
+    );
+    grad
+}
+
 fn generate_face(
-    resolution: u32,
+    planet: &Planet,
     local_up: Vec3,
+    grad: &colorgrad::Gradient,
 ) -> (
     Vec<[f32; 3]>,
     Vec<u32>,
@@ -125,17 +213,15 @@ fn generate_face(
 ) {
     let axis_a = Vec3::new(local_up.y, local_up.z, local_up.x);
     let axis_b = local_up.cross(axis_a);
-    let vertices_count = (resolution * resolution) as usize;
-    let triangle_count = ((resolution - 1) * (resolution - 1) * 6) as usize;
+    let vertices_count = (planet.resolution * planet.resolution) as usize;
+    let triangle_count = ((planet.resolution - 1) * (planet.resolution - 1) * 6) as usize;
     let mut positions: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
     let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
     let mut normals: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
     let mut uvs: Vec<[f32; 2]> = Vec::with_capacity(vertices_count);
     let mut colors: Vec<[f32; 4]> = Vec::with_capacity(vertices_count);
 
-    let perlin = Fbm::<Perlin>::new(1);
-
-    let resolution = resolution + 1;
+    let resolution = planet.resolution + 1;
     for y in 0..resolution {
         for x in 0..resolution {
             let x_percent = x as f32 / (resolution as f32 - 1.0);
@@ -143,16 +229,28 @@ fn generate_face(
             let vertex =
                 (local_up + (x_percent - 0.5) * 2.0 * axis_a + (y_percent - 0.5) * 2.0 * axis_b)
                     .normalize();
-            let vertex = vertex
-                // * radius of sphere
-                * (1.0
-                    + ((perlin.get([vertex.x as f64, vertex.y as f64, vertex.z as f64]) as f32
-                        + 1.0)
-                        * 0.5));
+            let noise_value = get_noise_at_point_3d(
+                [vertex[0] as f64, vertex[1] as f64, vertex[2] as f64],
+                planet.seed,
+                planet.scale / 100.0,
+                planet.offset,
+                &planet.method,
+                &planet.function,
+            ) as f32;
+            let height_value = (0_f32.max(noise_value - planet.sea_percent / 100.0));
+            let vertex =
+                vertex * (1.0 + (((height_value * 1.2).powf(planet.height_exponent) + 1.0) * 0.5));
             let i = x + y * resolution;
             positions.push([vertex.x, vertex.y, vertex.z]);
             normals.push([vertex.x, vertex.y, vertex.z]);
-            colors.push([1.0, 1.0, 1.0, 1.0]);
+            let color = grad.at(noise_value as f64 * 100.0);
+            let color = [
+                color.r as f32,
+                color.g as f32,
+                color.b as f32,
+                color.a as f32,
+            ];
+            colors.push(color);
             uvs.push([x_percent, y_percent]);
             if x != resolution - 1 && y != resolution - 1 {
                 // Triangle 1
