@@ -221,7 +221,7 @@ fn gui(mut contexts: EguiContexts, mut query: Query<&mut Terrain>) {
                 ui.color_edit_button_srgba_unmultiplied(&mut terrain.noise.base_color);
             });
             ui.add(Slider::new(&mut terrain.height_exponent, 0.1..=10.0).text("Height Exponent"));
-            ui.add(Slider::new(&mut terrain.sea_level, 0.0..=100.0).text("Sea Level"));
+            ui.add(Slider::new(&mut terrain.sea_percent, 0.0..=100.0).text("Sea Percent"));
             ui.separator();
             if ui.button("Add Region").clicked() {
                 let index = terrain.noise.regions.len() + 1;

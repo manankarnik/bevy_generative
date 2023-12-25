@@ -17,7 +17,7 @@ pub struct Terrain {
     pub resolution: u32,
     pub wireframe: bool,
     pub height_exponent: f32,
-    pub sea_level: f32,
+    pub sea_percent: f32,
     pub export: bool,
 }
 
@@ -29,7 +29,7 @@ impl Default for Terrain {
             resolution: 10,
             wireframe: false,
             height_exponent: 1.0,
-            sea_level: 10.0,
+            sea_percent: 10.0,
             export: false,
         }
     }
@@ -133,12 +133,10 @@ fn generate_terrain(
                 let i = i as f32;
                 let j = j as f32;
                 let noise_value = noise_values[i as usize][j as usize] as f32;
-                let height_value = ((noise_value.max(terrain.sea_level)) / 100.0);
-                let x = (i as f32 / terrain.resolution as f32 - width / 2.0) + 0.5;
-                let y = ((height_value.powf(terrain.height_exponent * 1.2) - 0.5) * 2.0)
-                    .min(1.0)
-                    .max(-1.0);
-                let z = (j as f32 / terrain.resolution as f32 - depth / 2.0) + 0.5;
+                let height_value = ((0_f32.max(noise_value - terrain.sea_percent)) / 100.0);
+                let x = (i / terrain.resolution as f32 - width / 2.0) + 0.5;
+                let y = (((height_value * 1.2).powf(terrain.height_exponent) - 0.5) * 2.0);
+                let z = (j / terrain.resolution as f32 - depth / 2.0) + 0.5;
 
                 let color = grad.at(noise_values[i as usize][j as usize]);
                 let color = [
