@@ -1,6 +1,6 @@
 mod gltf;
 use gltf::{export_gltf, Output, Vertex};
-use image::{codecs::png::PngEncoder, save_buffer, ColorType, DynamicImage, ImageBuffer, Rgba};
+use image::{codecs::png::PngEncoder, DynamicImage, ImageBuffer, ImageEncoder, Rgba};
 #[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
 use wasm_bindgen::prelude::wasm_bindgen;
@@ -11,13 +11,12 @@ extern "C" {
 }
 
 pub fn export_asset(image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>) {
-    #[cfg(target_arch = "wasm32")]
     {
         let mut png_buffer: Vec<u8> = vec![];
         let png_encoder = PngEncoder::new(&mut png_buffer);
         let color_type = DynamicImage::from(image_buffer.clone()).color();
         png_encoder
-            .encode(
+            .write_image(
                 &image_buffer,
                 image_buffer.width(),
                 image_buffer.height(),
@@ -30,7 +29,7 @@ pub fn export_asset(image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>) {
     #[cfg(not(target_arch = "wasm32"))]
     {
         if let Some(file_path) = FileDialog::new().save_file() {
-            save_buffer(
+            let _ = save_buffer(
                 file_path,
                 &image_buffer.to_vec(),
                 image_buffer.width(),

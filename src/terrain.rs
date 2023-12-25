@@ -1,7 +1,6 @@
 use bevy::{
     prelude::*,
     render::{
-        mesh::{Indices, VertexAttributeValues},
         render_resource::{PrimitiveTopology, TextureFormat},
     },
 };
@@ -133,9 +132,9 @@ fn generate_terrain(
                 let i = i as f32;
                 let j = j as f32;
                 let noise_value = noise_values[i as usize][j as usize] as f32;
-                let height_value = ((0_f32.max(noise_value - terrain.sea_percent)) / 100.0);
+                let height_value = (0_f32.max(noise_value - terrain.sea_percent)) / 100.0;
                 let x = (i / terrain.resolution as f32 - width / 2.0) + 0.5;
-                let y = (((height_value * 1.2).powf(terrain.height_exponent) - 0.5) * 2.0);
+                let y = ((height_value * 1.2).powf(terrain.height_exponent) - 0.5) * 2.0;
                 let z = (j / terrain.resolution as f32 - depth / 2.0) + 0.5;
 
                 let color = grad.at(noise_values[i as usize][j as usize]);

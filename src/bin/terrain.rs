@@ -4,7 +4,7 @@ use bevy_egui::{
     EguiContexts, EguiPlugin,
 };
 use bevy_generative::{
-    noise::{FunctionName, Method, Noise, Region},
+    noise::{FunctionName, Method, Region},
     terrain::{Terrain, TerrainBundle, TerrainPlugin},
 };
 use bevy_panorbit_camera::{PanOrbitCamera, PanOrbitCameraPlugin};

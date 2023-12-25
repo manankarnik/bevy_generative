@@ -1,15 +1,17 @@
 use bevy::{
     prelude::{
-        info, App, Assets, Bundle, Component, Handle, Mesh, PbrBundle, Plugin, Query, ResMut,
-        StandardMaterial, Transform, Update, Vec3,
+        App, Assets, Bundle, Component, Handle, Mesh, PbrBundle, Plugin, Query, ResMut,
+        StandardMaterial, Update, Vec3,
     },
     render::render_resource::PrimitiveTopology,
 };
 
 use crate::{
-    noise::{generate_noise_map, Noise},
+    noise::{Noise},
     util::export_terrain,
 };
+
+use noise::{Fbm, NoiseFn, Perlin};
 
 #[derive(Component)]
 pub struct Planet {
@@ -57,9 +59,6 @@ fn generate_planet(
         }
 
         let noise = &mut planet.noise;
-        let vertices_count: usize = ((noise.size[0] + 1) * (noise.size[1] + 1)) as usize;
-        let triangle_count: usize = (noise.size[0] * noise.size[1] * 2 * 3) as usize;
-
         let mut positions: Vec<[f32; 3]> = vec![];
         let mut indices: Vec<u32> = vec![];
         let mut normals: Vec<[f32; 3]> = vec![];
@@ -116,7 +115,7 @@ fn generate_planet(
 }
 
 fn generate_face(
-    size: u32,
+    resolution: u32,
     local_up: Vec3,
 ) -> (
     Vec<[f32; 3]>,
@@ -127,36 +126,44 @@ fn generate_face(
 ) {
     let axis_a = Vec3::new(local_up.y, local_up.z, local_up.x);
     let axis_b = local_up.cross(axis_a);
-    let vertices_count = (size * size) as usize;
-    let triangle_count = ((size - 1) * (size - 1) * 6) as usize;
+    let vertices_count = (resolution * resolution) as usize;
+    let triangle_count = ((resolution - 1) * (resolution - 1) * 6) as usize;
     let mut positions: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
     let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
     let mut normals: Vec<[f32; 3]> = Vec::with_capacity(vertices_count);
     let mut uvs: Vec<[f32; 2]> = Vec::with_capacity(vertices_count);
     let mut colors: Vec<[f32; 4]> = Vec::with_capacity(vertices_count);
 
-    let size = size + 1;
-    for y in 0..size {
-        for x in 0..size {
-            let x_percent = x as f32 / (size as f32 - 1.0);
-            let y_percent = y as f32 / (size as f32 - 1.0);
+    let perlin = Fbm::<Perlin>::new(1);
+
+    let resolution = resolution + 1;
+    for y in 0..resolution {
+        for x in 0..resolution {
+            let x_percent = x as f32 / (resolution as f32 - 1.0);
+            let y_percent = y as f32 / (resolution as f32 - 1.0);
             let vertex =
                 (local_up + (x_percent - 0.5) * 2.0 * axis_a + (y_percent - 0.5) * 2.0 * axis_b)
                     .normalize();
-            let i = x + y * size;
+            let vertex = vertex
+                // * radius of sphere
+                * (1.0
+                    + ((perlin.get([vertex.x as f64, vertex.y as f64, vertex.z as f64]) as f32
+                        + 1.0)
+                        * 0.5));
+            let i = x + y * resolution;
             positions.push([vertex.x, vertex.y, vertex.z]);
             normals.push([vertex.x, vertex.y, vertex.z]);
             colors.push([1.0, 1.0, 1.0, 1.0]);
             uvs.push([x_percent, y_percent]);
-            if x != size - 1 && y != size - 1 {
+            if x != resolution - 1 && y != resolution - 1 {
                 // Triangle 1
                 indices.push(i);
-                indices.push(i + size + 1);
-                indices.push(i + size);
+                indices.push(i + resolution + 1);
+                indices.push(i + resolution);
                 // Triangle 2
                 indices.push(i);
                 indices.push(i + 1);
-                indices.push(i + size + 1);
+                indices.push(i + resolution + 1);
             }
         }
     }

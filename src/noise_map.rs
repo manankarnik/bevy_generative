@@ -22,7 +22,7 @@ use bevy::{
     prelude::*,
     render::{render_resource::TextureFormat, texture::ImageSampler},
 };
-use image::{DynamicImage, Pixel};
+use image::{Pixel};
 
 use crate::{
     noise::{generate_noise_map, Noise},

@@ -1,9 +1,6 @@
 // Adapted from https://github.com/gltf-rs/gltf/blob/main/examples/export/main.rs
 
-use bevy::log::info;
 use gltf::json;
-#[cfg(target_arch = "wasm32")]
-use rfd::AsyncFileDialog;
 #[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
 use wasm_bindgen::prelude::wasm_bindgen;
