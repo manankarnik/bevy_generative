@@ -229,17 +229,18 @@ fn generate_face(
             let vertex =
                 (local_up + (x_percent - 0.5) * 2.0 * axis_a + (y_percent - 0.5) * 2.0 * axis_b)
                     .normalize();
-            let noise_value = get_noise_at_point_3d(
+            let noise_value = (get_noise_at_point_3d(
                 [vertex[0] as f64, vertex[1] as f64, vertex[2] as f64],
                 planet.seed,
                 planet.scale / 100.0,
                 planet.offset,
                 &planet.method,
                 &planet.function,
-            ) as f32;
-            let height_value = (0_f32.max(noise_value - planet.sea_percent / 100.0));
-            let vertex =
-                vertex * (1.0 + (((height_value * 1.2).powf(planet.height_exponent) + 1.0) * 0.5));
+            ) as f32
+                + 1.0)
+                * 0.5;
+            let height_value = (0_f32.max(noise_value - planet.sea_percent / 100.0)) * 0.2;
+            let vertex = vertex * (1.0 + height_value.powf(planet.height_exponent));
             let i = x + y * resolution;
             positions.push([vertex.x, vertex.y, vertex.z]);
             normals.push([vertex.x, vertex.y, vertex.z]);
