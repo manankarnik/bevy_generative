@@ -387,6 +387,7 @@ where
     let x = point[0] / scale + offset[0];
     let y = point[1] / scale + offset[1];
     let z = point[2] / scale + offset[2];
+    let noise = noise::Clamp::new(noise).set_bounds(-1.0, 1.0);
     noise.get([x, y, z])
 }
 
@@ -399,5 +400,6 @@ where
     let x = point[0] / scale + offset[0];
     let y = point[1] / scale + offset[1];
     let z = point[2] / scale + offset[2];
+    let noise = noise::Clamp::new(noise).set_bounds(-1.0, 1.0);
     noise.get([x, y, z])
 }
