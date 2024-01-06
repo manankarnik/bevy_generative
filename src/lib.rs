@@ -13,6 +13,7 @@
 #![allow(clippy::module_name_repetitions)]
 #![allow(clippy::similar_names)]
 #![allow(clippy::too_many_lines)]
+#![allow(clippy::default_trait_access)]
 
 //! Procedural generation in Bevy
 
