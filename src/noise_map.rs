@@ -81,10 +81,10 @@ fn generate_map(
         let mut domain: Vec<f64> = Vec::with_capacity(noise.regions.len());
         for region in &noise.regions {
             colors.push(colorgrad::Color {
-                r: region.color[0] as f64 / 255.0,
-                g: region.color[1] as f64 / 255.0,
-                b: region.color[2] as f64 / 255.0,
-                a: region.color[3] as f64 / 255.0,
+                r: f64::from(region.color[0]) / 255.0,
+                g: f64::from(region.color[1]) / 255.0,
+                b: f64::from(region.color[2]) / 255.0,
+                a: f64::from(region.color[3]) / 255.0,
             });
             domain.push(region.position);
         }
@@ -111,7 +111,7 @@ fn generate_map(
 
         for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
             let rgba = grad
-                .at(x as f64 * 100.0 / noise.gradient.size[0] as f64)
+                .at(f64::from(x) * 100.0 / f64::from(noise.gradient.size[0]))
                 .to_rgba8();
             pixel.blend(&image::Rgba(rgba));
         }

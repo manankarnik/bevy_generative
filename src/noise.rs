@@ -6,7 +6,7 @@ use noise::{MultiFractal, NoiseFn, Seedable};
 use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
 
 /// 2 dimensional noise method used to generate noise map
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum Method {
     /// Open Simplex noise
     OpenSimplex,
@@ -27,19 +27,19 @@ pub enum Method {
 impl fmt::Display for Method {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            Method::OpenSimplex => write!(f, "Open Simplex"),
-            Method::Perlin => write!(f, "Perlin"),
-            Method::PerlinSurflet => write!(f, "Perlin Surflet"),
-            Method::Simplex => write!(f, "Simplex"),
-            Method::SuperSimplex => write!(f, "Super Simplex"),
-            Method::Value => write!(f, "Value"),
-            Method::Worley => write!(f, "Worley"),
+            Self::OpenSimplex => write!(f, "Open Simplex"),
+            Self::Perlin => write!(f, "Perlin"),
+            Self::PerlinSurflet => write!(f, "Perlin Surflet"),
+            Self::Simplex => write!(f, "Simplex"),
+            Self::SuperSimplex => write!(f, "Super Simplex"),
+            Self::Value => write!(f, "Value"),
+            Self::Worley => write!(f, "Worley"),
         }
     }
 }
 
 /// Fractal function that should be used on the noise values
-#[derive(PartialEq)]
+#[derive(PartialEq, Eq)]
 pub enum FunctionName {
     /// See [`BasicMulti`](../../noise/struct.BasicMulti.html)
     BasicMulti,
@@ -56,11 +56,11 @@ pub enum FunctionName {
 impl fmt::Display for FunctionName {
     fn fmt(&self, f: &mut fmt::Formatter<'_>) -> fmt::Result {
         match self {
-            FunctionName::BasicMulti => write!(f, "Basic Multi"),
-            FunctionName::Billow => write!(f, "Billow"),
-            FunctionName::Fbm => write!(f, "FBM"),
-            FunctionName::HybridMulti => write!(f, "Hybrid Multi"),
-            FunctionName::RidgedMulti => write!(f, "Ridged Multi"),
+            Self::BasicMulti => write!(f, "Basic Multi"),
+            Self::Billow => write!(f, "Billow"),
+            Self::Fbm => write!(f, "FBM"),
+            Self::HybridMulti => write!(f, "Hybrid Multi"),
+            Self::RidgedMulti => write!(f, "Ridged Multi"),
         }
     }
 }
@@ -100,7 +100,7 @@ pub struct Region {
 impl Default for Region {
     fn default() -> Self {
         Self {
-            label: "".to_string(),
+            label: String::new(),
             position: 0.0,
             color: [0, 0, 0, 255],
         }
@@ -284,11 +284,11 @@ fn generate_noise_vector(
 ) -> Vec<Vec<f64>> {
     let mut noise_vector: Vec<Vec<f64>> = Vec::with_capacity(size[0] as usize);
     let noise = noise::Clamp::new(noise).set_bounds(-1.0, 1.0);
-    for i in 0..(size[0] + 1) {
+    for i in 0..=size[0] {
         let mut row: Vec<f64> = Vec::with_capacity(size[1] as usize);
-        for j in 0..(size[1] + 1) {
-            let x = f64::from(i as i32 - (size[0] / 2) as i32) / scale + f64::from(offset[0]);
-            let y = f64::from(j as i32 - (size[1] / 2) as i32) / scale + f64::from(offset[1]);
+        for j in 0..=size[1] {
+            let x = f64::from(i as i32 - (size[0] / 2) as i32) / scale + offset[0];
+            let y = f64::from(j as i32 - (size[1] / 2) as i32) / scale + offset[1];
             let value = (noise.get([x, y]) + 1.0) / 2.0 * 100.0;
             row.push(value);
         }
@@ -353,7 +353,7 @@ pub(crate) fn get_noise_at_point_3d(
                 Method::Worley => fractal_noise_at_point_3d::<RidgedMulti<Worley>>,
             },
         };
-        noise_at_point_3d(point, seed, scale, offset, &function)
+        noise_at_point_3d(point, seed, scale, offset, function)
     } else {
         let noise_at_point_3d = match method {
             Method::OpenSimplex => noise_at_point_3d::<OpenSimplex>,

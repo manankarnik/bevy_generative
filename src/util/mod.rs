@@ -31,7 +31,7 @@ pub fn export_asset(image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>) {
         if let Some(file_path) = FileDialog::new().save_file() {
             let _ = save_buffer(
                 file_path,
-                &image_buffer.to_vec(),
+                &image_buffer.clone(),
                 image_buffer.width(),
                 image_buffer.height(),
                 DynamicImage::from(image_buffer).color(),

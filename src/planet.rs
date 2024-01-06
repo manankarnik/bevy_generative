@@ -1,12 +1,11 @@
 use bevy::{
-    ecs::query,
     prelude::{
         App, Assets, Bundle, Component, Handle, Image, Mesh, PbrBundle, Plugin, Query, ResMut,
         StandardMaterial, Update, Vec3,
     },
     render::render_resource::{PrimitiveTopology, TextureFormat},
 };
-use colorgrad::CustomGradient;
+
 use image::Pixel;
 
 use crate::{
@@ -89,7 +88,7 @@ fn generate_planet(
 ) {
     for (mut planet, mut mesh_handle, material) in &mut query {
         if let Some(material) = materials.get_mut(material) {
-            *material = StandardMaterial::default()
+            *material = StandardMaterial::default();
         }
 
         let grad = generate_gradient(&mut images, &mut planet);
@@ -150,17 +149,17 @@ fn generate_planet(
 }
 
 fn generate_gradient(
-    mut images: &mut ResMut<Assets<Image>>,
+    images: &mut ResMut<Assets<Image>>,
     planet: &mut Planet,
 ) -> colorgrad::Gradient {
     let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(planet.regions.len());
     let mut domain: Vec<f64> = Vec::with_capacity(planet.regions.len());
     for region in &planet.regions {
         colors.push(colorgrad::Color {
-            r: region.color[0] as f64 / 255.0,
-            g: region.color[1] as f64 / 255.0,
-            b: region.color[2] as f64 / 255.0,
-            a: region.color[3] as f64 / 255.0,
+            r: f64::from(region.color[0]) / 255.0,
+            g: f64::from(region.color[1]) / 255.0,
+            b: f64::from(region.color[2]) / 255.0,
+            a: f64::from(region.color[3]) / 255.0,
         });
         domain.push(region.position);
     }
@@ -187,7 +186,7 @@ fn generate_gradient(
 
     for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
         let rgba = grad
-            .at(x as f64 * 100.0 / planet.gradient.size[0] as f64)
+            .at(f64::from(x) * 100.0 / f64::from(planet.gradient.size[0]))
             .to_rgba8();
         pixel.blend(&image::Rgba(rgba));
     }
@@ -230,7 +229,7 @@ fn generate_face(
                 (local_up + (x_percent - 0.5) * 2.0 * axis_a + (y_percent - 0.5) * 2.0 * axis_b)
                     .normalize();
             let noise_value = (get_noise_at_point_3d(
-                [vertex[0] as f64, vertex[1] as f64, vertex[2] as f64],
+                [f64::from(vertex[0]), f64::from(vertex[1]), f64::from(vertex[2])],
                 planet.seed,
                 planet.scale / 100.0,
                 planet.offset,
@@ -244,7 +243,7 @@ fn generate_face(
             let i = x + y * resolution;
             positions.push([vertex.x, vertex.y, vertex.z]);
             normals.push([vertex.x, vertex.y, vertex.z]);
-            let color = grad.at(noise_value as f64 * 100.0);
+            let color = grad.at(f64::from(noise_value) * 100.0);
             let color = [
                 color.r as f32,
                 color.g as f32,

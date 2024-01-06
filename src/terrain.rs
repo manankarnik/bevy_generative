@@ -56,7 +56,7 @@ fn generate_terrain(
 ) {
     for (mut terrain, mut mesh_handle, material) in &mut query {
         if let Some(material) = materials.get_mut(material) {
-            *material = StandardMaterial::default()
+            *material = StandardMaterial::default();
         }
         terrain.noise.size = [
             terrain.size[0] * terrain.resolution,
@@ -68,10 +68,10 @@ fn generate_terrain(
         let mut domain: Vec<f64> = Vec::with_capacity(terrain.noise.regions.len());
         for region in &terrain.noise.regions {
             colors.push(colorgrad::Color {
-                r: region.color[0] as f64 / 255.0,
-                g: region.color[1] as f64 / 255.0,
-                b: region.color[2] as f64 / 255.0,
-                a: region.color[3] as f64 / 255.0,
+                r: f64::from(region.color[0]) / 255.0,
+                g: f64::from(region.color[1]) / 255.0,
+                b: f64::from(region.color[2]) / 255.0,
+                a: f64::from(region.color[3]) / 255.0,
             });
             domain.push(region.position);
         }
@@ -101,7 +101,7 @@ fn generate_terrain(
 
         for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
             let rgba = grad
-                .at(x as f64 * 100.0 / terrain.noise.gradient.size[0] as f64)
+                .at(f64::from(x) * 100.0 / f64::from(terrain.noise.gradient.size[0]))
                 .to_rgba8();
             pixel.blend(&image::Rgba(rgba));
         }
