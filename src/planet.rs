@@ -10,23 +10,42 @@ use image::Pixel;
 
 use crate::{
     noise::{get_noise_at_point_3d, Function, Gradient, Method, Region},
-    util::export_terrain,
+    util::export_model,
 };
 
+/// Component for planet configuration
 #[derive(Component)]
 pub struct Planet {
+    /// Seed of the noise
     pub seed: u32,
+    /// Scale of the noise
     pub scale: f64,
+    /// Offset of the noise
     pub offset: [f64; 3],
+    /// Method used to generate noise
     pub method: Method,
+    /// Function used to generate noise
     pub function: Function,
+    /// Resolution of planet mesh
     pub resolution: u32,
+    /// Gradient determines how the noise values are mapped to colors
     pub gradient: Gradient,
+    /// Base color of the gradient.
+    /// If gradient has transparency, base color will be blended with the gradient
     pub base_color: [u8; 4],
+    /// Vector of regions
     pub regions: Vec<Region>,
+    /// If true, renders planet mesh as wireframe
     pub wireframe: bool,
+    /// Height values are raised to this value.
+    /// Lower values result in plains, higher values result in mountains
     pub height_exponent: f32,
+    /// Percentage of planet that should appear under sea
+    /// The mesh below this value will be flat
     pub sea_percent: f32,
+    /// If true, exports model in glb format
+    /// Native: Shows save file dialog.
+    /// WASM: Downloads model based on browser configuration.
     pub export: bool,
 }
 
@@ -66,18 +85,30 @@ impl Default for Planet {
     }
 }
 
+/// Render `Planet` as a `PbrBundle`
 #[derive(Bundle, Default)]
 pub struct PlanetBundle {
+    /// Planet configuration
     pub planet: Planet,
+    /// Generated mesh data is written to `PbrBundle`
     pub pbr_bundle: PbrBundle,
 }
 
+/// Plugin to generate planet
 pub struct PlanetPlugin;
 
 impl Plugin for PlanetPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, generate_planet);
     }
+}
+
+struct MeshData {
+    positions: Vec<[f32; 3]>,
+    indices: Vec<u32>,
+    normals: Vec<[f32; 3]>,
+    uvs: Vec<[f32; 2]>,
+    colors: Vec<[f32; 4]>,
 }
 
 fn generate_planet(
@@ -108,14 +139,18 @@ fn generate_planet(
             Vec3::Z,
             Vec3::NEG_Z,
         ] {
-            let (p, mut i, n, u, c) = generate_face(&planet, direction, &grad);
-            positions.extend(p);
-            i = i.iter().map(|index| index + index_start).collect();
-            index_start = i.iter().max().unwrap_or(&0) + 1;
-            indices.extend(i);
-            normals.extend(n);
-            uvs.extend(u);
-            colors.extend(c);
+            let mut mesh_data = generate_face(&planet, direction, &grad);
+            positions.extend(mesh_data.positions);
+            mesh_data.indices = mesh_data
+                .indices
+                .iter()
+                .map(|index| index + index_start)
+                .collect();
+            index_start = mesh_data.indices.iter().max().unwrap_or(&0) + 1;
+            indices.extend(mesh_data.indices);
+            normals.extend(mesh_data.normals);
+            uvs.extend(mesh_data.uvs);
+            colors.extend(mesh_data.colors);
         }
 
         if planet.wireframe {
@@ -142,7 +177,7 @@ fn generate_planet(
         *mesh_handle = meshes.add(mesh);
 
         if planet.export {
-            export_terrain(positions, indices, colors);
+            export_model(&positions, indices, &colors);
             planet.export = false;
         }
     }
@@ -167,12 +202,12 @@ fn generate_gradient(
         .colors(&colors)
         .domain(&domain)
         .build()
-        .unwrap_or(
+        .unwrap_or_else(|_| {
             colorgrad::CustomGradient::new()
                 .colors(&colors)
                 .build()
-                .expect("Gradient generation failed"),
-        );
+                .expect("Gradient generation failed")
+        });
 
     if planet.gradient.segments != 0 {
         grad = grad.sharp(planet.gradient.segments, planet.gradient.smoothness);
@@ -199,17 +234,7 @@ fn generate_gradient(
     grad
 }
 
-fn generate_face(
-    planet: &Planet,
-    local_up: Vec3,
-    grad: &colorgrad::Gradient,
-) -> (
-    Vec<[f32; 3]>,
-    Vec<u32>,
-    Vec<[f32; 3]>,
-    Vec<[f32; 2]>,
-    Vec<[f32; 4]>,
-) {
+fn generate_face(planet: &Planet, local_up: Vec3, grad: &colorgrad::Gradient) -> MeshData {
     let axis_a = Vec3::new(local_up.y, local_up.z, local_up.x);
     let axis_b = local_up.cross(axis_a);
     let vertices_count = (planet.resolution * planet.resolution) as usize;
@@ -229,7 +254,11 @@ fn generate_face(
                 (local_up + (x_percent - 0.5) * 2.0 * axis_a + (y_percent - 0.5) * 2.0 * axis_b)
                     .normalize();
             let noise_value = (get_noise_at_point_3d(
-                [f64::from(vertex[0]), f64::from(vertex[1]), f64::from(vertex[2])],
+                [
+                    f64::from(vertex[0]),
+                    f64::from(vertex[1]),
+                    f64::from(vertex[2]),
+                ],
                 planet.seed,
                 planet.scale / 100.0,
                 planet.offset,
@@ -264,5 +293,11 @@ fn generate_face(
             }
         }
     }
-    (positions, indices, normals, uvs, colors)
+    MeshData {
+        positions,
+        indices,
+        normals,
+        uvs,
+        colors,
+    }
 }

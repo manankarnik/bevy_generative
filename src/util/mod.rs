@@ -40,7 +40,7 @@ pub fn export_asset(image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>) {
     }
 }
 
-pub fn export_terrain(positions: Vec<[f32; 3]>, indices: Vec<u32>, colors: Vec<[f32; 4]>) {
+pub fn export_model(positions: &[[f32; 3]], indices: Vec<u32>, colors: &[[f32; 4]]) {
     let mut vertices: Vec<Vertex> = vec![];
 
     for i in indices {

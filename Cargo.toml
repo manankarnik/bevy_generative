@@ -3,6 +3,13 @@ name = "bevy_generative"
 version = "0.1.0"
 license = "MIT"
 edition = "2021"
+description = "Procedural generation in Bevy"
+categories = ["game-development", "graphics", "rendering", "visualization"]
+keywords = ["bevy", "gamedev", "procedural", "generation", "graphics"]
+readme = "README.md"
+repository = "https://github.com/manankarnik/bevy_generative"
+homepage = "https://github.com/manankarnik/bevy_generative"
+documentation = "https://docs.rs/bevy_generative"
 
 # See more keys and their definitions at https://doc.rust-lang.org/cargo/reference/manifest.html
 [dependencies]

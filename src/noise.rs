@@ -5,7 +5,7 @@ use noise::{BasicMulti, Billow, Fbm, HybridMulti, RidgedMulti};
 use noise::{MultiFractal, NoiseFn, Seedable};
 use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
 
-/// 2 dimensional noise method used to generate noise map
+/// 2D noise method used to generate noise map
 #[derive(PartialEq, Eq)]
 pub enum Method {
     /// Open Simplex noise
@@ -38,18 +38,18 @@ impl fmt::Display for Method {
     }
 }
 
-/// Fractal function that should be used on the noise values
+/// Fractal function that should be applied on the noise values
 #[derive(PartialEq, Eq)]
 pub enum FunctionName {
-    /// See [`BasicMulti`](../../noise/struct.BasicMulti.html)
+    /// See [`BasicMulti`](https://docs.rs/noise/latest/noise/struct.BasicMulti.html)
     BasicMulti,
-    /// See [`Billow`](../../noise/struct.Billow.html)
+    /// See [`Billow`](https://docs.rs/noise/latest/noise/struct.Billow.html)
     Billow,
-    /// See [`Fbm`](../../noise/struct.Fbm.html)
+    /// See [`Fbm`](https://docs.rs/noise/latest/noise/struct.Fbm.html)
     Fbm,
-    /// See [`HybridMulti`](../../noise/struct.HybridMulti.html)
+    /// See [`HybridMulti`](https://docs.rs/noise/latest/noise/struct.HybridMulti.html)
     HybridMulti,
-    /// See [`RidgedMulti`](../../noise/struct.RidgedMulti.html)
+    /// See [`RidgedMulti`](https://docs.rs/noise/latest/noise/struct.RidgedMulti.html)
     RidgedMulti,
 }
 
@@ -69,9 +69,13 @@ impl fmt::Display for FunctionName {
 pub struct Function {
     /// Name of the function
     pub name: Option<FunctionName>,
+    /// See [`Octaves`](https://docs.rs/noise/latest/noise/struct.BasicMulti.html#structfield.octaves)
     pub octaves: usize,
+    /// See [`Frequency`](https://docs.rs/noise/latest/noise/struct.BasicMulti.html#structfield.octaves)
     pub frequency: f64,
+    /// See [`Lacunarity`](https://docs.rs/noise/latest/noise/struct.BasicMulti.html#structfield.octaves)
     pub lacunarity: f64,
+    /// See [`Persistance`](https://docs.rs/noise/latest/noise/struct.BasicMulti.html#structfield.octaves)
     pub persistence: f64,
 }
 
@@ -107,10 +111,15 @@ impl Default for Region {
     }
 }
 
+/// Gradient used to map color values
 pub struct Gradient {
+    /// Image handle of gradient
     pub image: Handle<Image>,
+    /// Size of gradient
     pub size: [u32; 2],
+    /// Segments in gradient (0 for infinite)
     pub segments: usize,
+    /// Smoothness between gradient borders
     pub smoothness: f64,
 }
 
@@ -125,6 +134,7 @@ impl Default for Gradient {
     }
 }
 
+/// Noise configuration
 pub struct Noise {
     pub(crate) size: [u32; 2],
     /// Seed of the noise
@@ -141,8 +151,8 @@ pub struct Noise {
     pub regions: Vec<Region>,
     /// Gradient determines how the noise values are mapped to colors
     pub gradient: Gradient,
-    /// Base color of the noise map. If gradient has transparency, base color will be blended with
-    /// the gradient
+    /// Base color of the gradient.
+    /// If gradient has transparency, base color will be blended with the gradient
     pub base_color: [u8; 4],
 }
 
@@ -179,73 +189,76 @@ impl Default for Noise {
 }
 
 pub(crate) fn generate_noise_map(noise: &Noise) -> Vec<Vec<f64>> {
-    if let Some(function_name) = &noise.function.name {
-        let generate_noise_map = match function_name {
-            FunctionName::BasicMulti => match noise.method {
-                Method::OpenSimplex => generate_fractal_noise::<BasicMulti<OpenSimplex>>,
-                Method::Perlin => generate_fractal_noise::<BasicMulti<Perlin>>,
-                Method::PerlinSurflet => generate_fractal_noise::<BasicMulti<PerlinSurflet>>,
-                Method::Simplex => generate_fractal_noise::<BasicMulti<Simplex>>,
-                Method::SuperSimplex => generate_fractal_noise::<BasicMulti<SuperSimplex>>,
-                Method::Value => generate_fractal_noise::<BasicMulti<Value>>,
-                Method::Worley => generate_fractal_noise::<BasicMulti<Worley>>,
-            },
-            FunctionName::Billow => match noise.method {
-                Method::OpenSimplex => generate_fractal_noise::<Billow<OpenSimplex>>,
-                Method::Perlin => generate_fractal_noise::<Billow<Perlin>>,
-                Method::PerlinSurflet => generate_fractal_noise::<Billow<PerlinSurflet>>,
-                Method::Simplex => generate_fractal_noise::<Billow<Simplex>>,
-                Method::SuperSimplex => generate_fractal_noise::<Billow<SuperSimplex>>,
-                Method::Value => generate_fractal_noise::<Billow<Value>>,
-                Method::Worley => generate_fractal_noise::<Billow<Worley>>,
-            },
-            FunctionName::Fbm => match noise.method {
-                Method::OpenSimplex => generate_fractal_noise::<Fbm<OpenSimplex>>,
-                Method::Perlin => generate_fractal_noise::<Fbm<Perlin>>,
-                Method::PerlinSurflet => generate_fractal_noise::<Fbm<PerlinSurflet>>,
-                Method::Simplex => generate_fractal_noise::<Fbm<Simplex>>,
-                Method::SuperSimplex => generate_fractal_noise::<Fbm<SuperSimplex>>,
-                Method::Value => generate_fractal_noise::<Fbm<Value>>,
-                Method::Worley => generate_fractal_noise::<Fbm<Worley>>,
-            },
-            FunctionName::HybridMulti => match noise.method {
-                Method::OpenSimplex => generate_fractal_noise::<HybridMulti<OpenSimplex>>,
-                Method::Perlin => generate_fractal_noise::<HybridMulti<Perlin>>,
-                Method::PerlinSurflet => generate_fractal_noise::<HybridMulti<PerlinSurflet>>,
-                Method::Simplex => generate_fractal_noise::<HybridMulti<Simplex>>,
-                Method::SuperSimplex => generate_fractal_noise::<HybridMulti<SuperSimplex>>,
-                Method::Value => generate_fractal_noise::<HybridMulti<Value>>,
-                Method::Worley => generate_fractal_noise::<HybridMulti<Worley>>,
-            },
-            FunctionName::RidgedMulti => match noise.method {
-                Method::OpenSimplex => generate_fractal_noise::<RidgedMulti<OpenSimplex>>,
-                Method::Perlin => generate_fractal_noise::<RidgedMulti<Perlin>>,
-                Method::PerlinSurflet => generate_fractal_noise::<RidgedMulti<PerlinSurflet>>,
-                Method::Simplex => generate_fractal_noise::<RidgedMulti<Simplex>>,
-                Method::SuperSimplex => generate_fractal_noise::<RidgedMulti<SuperSimplex>>,
-                Method::Value => generate_fractal_noise::<RidgedMulti<Value>>,
-                Method::Worley => generate_fractal_noise::<RidgedMulti<Worley>>,
-            },
-        };
-        generate_noise_map(
-            noise.size,
-            noise.seed,
-            noise.scale,
-            noise.offset,
-            &noise.function,
-        )
-    } else {
-        let generate_noise_map = match noise.method {
-            Method::OpenSimplex => generate_noise::<OpenSimplex>,
-            Method::Perlin => generate_noise::<Perlin>,
-            Method::PerlinSurflet => generate_noise::<PerlinSurflet>,
-            Method::Simplex => generate_noise::<Simplex>,
-            Method::SuperSimplex => generate_noise::<SuperSimplex>,
-            Method::Value => generate_noise::<Value>,
-            Method::Worley => generate_noise::<Worley>,
-        };
-        generate_noise_map(noise.size, noise.seed, noise.scale, noise.offset)
-    }
+    noise.function.name.as_ref().map_or_else(
+        || {
+            let generate_noise_map = match noise.method {
+                Method::OpenSimplex => generate_noise::<OpenSimplex>,
+                Method::Perlin => generate_noise::<Perlin>,
+                Method::PerlinSurflet => generate_noise::<PerlinSurflet>,
+                Method::Simplex => generate_noise::<Simplex>,
+                Method::SuperSimplex => generate_noise::<SuperSimplex>,
+                Method::Value => generate_noise::<Value>,
+                Method::Worley => generate_noise::<Worley>,
+            };
+            generate_noise_map(noise.size, noise.seed, noise.scale, noise.offset)
+        },
+        |function_name| {
+            let generate_noise_map = match function_name {
+                FunctionName::BasicMulti => match noise.method {
+                    Method::OpenSimplex => generate_fractal_noise::<BasicMulti<OpenSimplex>>,
+                    Method::Perlin => generate_fractal_noise::<BasicMulti<Perlin>>,
+                    Method::PerlinSurflet => generate_fractal_noise::<BasicMulti<PerlinSurflet>>,
+                    Method::Simplex => generate_fractal_noise::<BasicMulti<Simplex>>,
+                    Method::SuperSimplex => generate_fractal_noise::<BasicMulti<SuperSimplex>>,
+                    Method::Value => generate_fractal_noise::<BasicMulti<Value>>,
+                    Method::Worley => generate_fractal_noise::<BasicMulti<Worley>>,
+                },
+                FunctionName::Billow => match noise.method {
+                    Method::OpenSimplex => generate_fractal_noise::<Billow<OpenSimplex>>,
+                    Method::Perlin => generate_fractal_noise::<Billow<Perlin>>,
+                    Method::PerlinSurflet => generate_fractal_noise::<Billow<PerlinSurflet>>,
+                    Method::Simplex => generate_fractal_noise::<Billow<Simplex>>,
+                    Method::SuperSimplex => generate_fractal_noise::<Billow<SuperSimplex>>,
+                    Method::Value => generate_fractal_noise::<Billow<Value>>,
+                    Method::Worley => generate_fractal_noise::<Billow<Worley>>,
+                },
+                FunctionName::Fbm => match noise.method {
+                    Method::OpenSimplex => generate_fractal_noise::<Fbm<OpenSimplex>>,
+                    Method::Perlin => generate_fractal_noise::<Fbm<Perlin>>,
+                    Method::PerlinSurflet => generate_fractal_noise::<Fbm<PerlinSurflet>>,
+                    Method::Simplex => generate_fractal_noise::<Fbm<Simplex>>,
+                    Method::SuperSimplex => generate_fractal_noise::<Fbm<SuperSimplex>>,
+                    Method::Value => generate_fractal_noise::<Fbm<Value>>,
+                    Method::Worley => generate_fractal_noise::<Fbm<Worley>>,
+                },
+                FunctionName::HybridMulti => match noise.method {
+                    Method::OpenSimplex => generate_fractal_noise::<HybridMulti<OpenSimplex>>,
+                    Method::Perlin => generate_fractal_noise::<HybridMulti<Perlin>>,
+                    Method::PerlinSurflet => generate_fractal_noise::<HybridMulti<PerlinSurflet>>,
+                    Method::Simplex => generate_fractal_noise::<HybridMulti<Simplex>>,
+                    Method::SuperSimplex => generate_fractal_noise::<HybridMulti<SuperSimplex>>,
+                    Method::Value => generate_fractal_noise::<HybridMulti<Value>>,
+                    Method::Worley => generate_fractal_noise::<HybridMulti<Worley>>,
+                },
+                FunctionName::RidgedMulti => match noise.method {
+                    Method::OpenSimplex => generate_fractal_noise::<RidgedMulti<OpenSimplex>>,
+                    Method::Perlin => generate_fractal_noise::<RidgedMulti<Perlin>>,
+                    Method::PerlinSurflet => generate_fractal_noise::<RidgedMulti<PerlinSurflet>>,
+                    Method::Simplex => generate_fractal_noise::<RidgedMulti<Simplex>>,
+                    Method::SuperSimplex => generate_fractal_noise::<RidgedMulti<SuperSimplex>>,
+                    Method::Value => generate_fractal_noise::<RidgedMulti<Value>>,
+                    Method::Worley => generate_fractal_noise::<RidgedMulti<Worley>>,
+                },
+            };
+            generate_noise_map(
+                noise.size,
+                noise.seed,
+                noise.scale,
+                noise.offset,
+                &noise.function,
+            )
+        },
+    )
 }
 
 fn generate_noise<T>(size: [u32; 2], seed: u32, scale: f64, offset: [f64; 2]) -> Vec<Vec<f64>>
@@ -305,67 +318,74 @@ pub(crate) fn get_noise_at_point_3d(
     method: &Method,
     function: &Function,
 ) -> f64 {
-    if let Some(ref function_name) = function.name {
-        let noise_at_point_3d = match function_name {
-            FunctionName::BasicMulti => match method {
-                Method::OpenSimplex => fractal_noise_at_point_3d::<BasicMulti<OpenSimplex>>,
-                Method::Perlin => fractal_noise_at_point_3d::<BasicMulti<Perlin>>,
-                Method::PerlinSurflet => fractal_noise_at_point_3d::<BasicMulti<PerlinSurflet>>,
-                Method::Simplex => fractal_noise_at_point_3d::<BasicMulti<Simplex>>,
-                Method::SuperSimplex => fractal_noise_at_point_3d::<BasicMulti<SuperSimplex>>,
-                Method::Value => fractal_noise_at_point_3d::<BasicMulti<Value>>,
-                Method::Worley => fractal_noise_at_point_3d::<BasicMulti<Worley>>,
-            },
-            FunctionName::Billow => match method {
-                Method::OpenSimplex => fractal_noise_at_point_3d::<Billow<OpenSimplex>>,
-                Method::Perlin => fractal_noise_at_point_3d::<Billow<Perlin>>,
-                Method::PerlinSurflet => fractal_noise_at_point_3d::<Billow<PerlinSurflet>>,
-                Method::Simplex => fractal_noise_at_point_3d::<Billow<Simplex>>,
-                Method::SuperSimplex => fractal_noise_at_point_3d::<Billow<SuperSimplex>>,
-                Method::Value => fractal_noise_at_point_3d::<Billow<Value>>,
-                Method::Worley => fractal_noise_at_point_3d::<Billow<Worley>>,
-            },
-            FunctionName::Fbm => match method {
-                Method::OpenSimplex => fractal_noise_at_point_3d::<Fbm<OpenSimplex>>,
-                Method::Perlin => fractal_noise_at_point_3d::<Fbm<Perlin>>,
-                Method::PerlinSurflet => fractal_noise_at_point_3d::<Fbm<PerlinSurflet>>,
-                Method::Simplex => fractal_noise_at_point_3d::<Fbm<Simplex>>,
-                Method::SuperSimplex => fractal_noise_at_point_3d::<Fbm<SuperSimplex>>,
-                Method::Value => fractal_noise_at_point_3d::<Fbm<Value>>,
-                Method::Worley => fractal_noise_at_point_3d::<Fbm<Worley>>,
-            },
-            FunctionName::HybridMulti => match method {
-                Method::OpenSimplex => fractal_noise_at_point_3d::<HybridMulti<OpenSimplex>>,
-                Method::Perlin => fractal_noise_at_point_3d::<HybridMulti<Perlin>>,
-                Method::PerlinSurflet => fractal_noise_at_point_3d::<HybridMulti<PerlinSurflet>>,
-                Method::Simplex => fractal_noise_at_point_3d::<HybridMulti<Simplex>>,
-                Method::SuperSimplex => fractal_noise_at_point_3d::<HybridMulti<SuperSimplex>>,
-                Method::Value => fractal_noise_at_point_3d::<HybridMulti<Value>>,
-                Method::Worley => fractal_noise_at_point_3d::<HybridMulti<Worley>>,
-            },
-            FunctionName::RidgedMulti => match method {
-                Method::OpenSimplex => fractal_noise_at_point_3d::<RidgedMulti<OpenSimplex>>,
-                Method::Perlin => fractal_noise_at_point_3d::<RidgedMulti<Perlin>>,
-                Method::PerlinSurflet => fractal_noise_at_point_3d::<RidgedMulti<PerlinSurflet>>,
-                Method::Simplex => fractal_noise_at_point_3d::<RidgedMulti<Simplex>>,
-                Method::SuperSimplex => fractal_noise_at_point_3d::<RidgedMulti<SuperSimplex>>,
-                Method::Value => fractal_noise_at_point_3d::<RidgedMulti<Value>>,
-                Method::Worley => fractal_noise_at_point_3d::<RidgedMulti<Worley>>,
-            },
-        };
-        noise_at_point_3d(point, seed, scale, offset, function)
-    } else {
-        let noise_at_point_3d = match method {
-            Method::OpenSimplex => noise_at_point_3d::<OpenSimplex>,
-            Method::Perlin => noise_at_point_3d::<Perlin>,
-            Method::PerlinSurflet => noise_at_point_3d::<PerlinSurflet>,
-            Method::Simplex => noise_at_point_3d::<Simplex>,
-            Method::SuperSimplex => noise_at_point_3d::<SuperSimplex>,
-            Method::Value => noise_at_point_3d::<Value>,
-            Method::Worley => noise_at_point_3d::<Worley>,
-        };
-        noise_at_point_3d(point, seed, scale, offset)
-    }
+    function.name.as_ref().map_or_else(
+        || {
+            let noise_at_point_3d = match method {
+                Method::OpenSimplex => noise_at_point_3d::<OpenSimplex>,
+                Method::Perlin => noise_at_point_3d::<Perlin>,
+                Method::PerlinSurflet => noise_at_point_3d::<PerlinSurflet>,
+                Method::Simplex => noise_at_point_3d::<Simplex>,
+                Method::SuperSimplex => noise_at_point_3d::<SuperSimplex>,
+                Method::Value => noise_at_point_3d::<Value>,
+                Method::Worley => noise_at_point_3d::<Worley>,
+            };
+            noise_at_point_3d(point, seed, scale, offset)
+        },
+        |function_name| {
+            let noise_at_point_3d = match function_name {
+                FunctionName::BasicMulti => match method {
+                    Method::OpenSimplex => fractal_noise_at_point_3d::<BasicMulti<OpenSimplex>>,
+                    Method::Perlin => fractal_noise_at_point_3d::<BasicMulti<Perlin>>,
+                    Method::PerlinSurflet => fractal_noise_at_point_3d::<BasicMulti<PerlinSurflet>>,
+                    Method::Simplex => fractal_noise_at_point_3d::<BasicMulti<Simplex>>,
+                    Method::SuperSimplex => fractal_noise_at_point_3d::<BasicMulti<SuperSimplex>>,
+                    Method::Value => fractal_noise_at_point_3d::<BasicMulti<Value>>,
+                    Method::Worley => fractal_noise_at_point_3d::<BasicMulti<Worley>>,
+                },
+                FunctionName::Billow => match method {
+                    Method::OpenSimplex => fractal_noise_at_point_3d::<Billow<OpenSimplex>>,
+                    Method::Perlin => fractal_noise_at_point_3d::<Billow<Perlin>>,
+                    Method::PerlinSurflet => fractal_noise_at_point_3d::<Billow<PerlinSurflet>>,
+                    Method::Simplex => fractal_noise_at_point_3d::<Billow<Simplex>>,
+                    Method::SuperSimplex => fractal_noise_at_point_3d::<Billow<SuperSimplex>>,
+                    Method::Value => fractal_noise_at_point_3d::<Billow<Value>>,
+                    Method::Worley => fractal_noise_at_point_3d::<Billow<Worley>>,
+                },
+                FunctionName::Fbm => match method {
+                    Method::OpenSimplex => fractal_noise_at_point_3d::<Fbm<OpenSimplex>>,
+                    Method::Perlin => fractal_noise_at_point_3d::<Fbm<Perlin>>,
+                    Method::PerlinSurflet => fractal_noise_at_point_3d::<Fbm<PerlinSurflet>>,
+                    Method::Simplex => fractal_noise_at_point_3d::<Fbm<Simplex>>,
+                    Method::SuperSimplex => fractal_noise_at_point_3d::<Fbm<SuperSimplex>>,
+                    Method::Value => fractal_noise_at_point_3d::<Fbm<Value>>,
+                    Method::Worley => fractal_noise_at_point_3d::<Fbm<Worley>>,
+                },
+                FunctionName::HybridMulti => match method {
+                    Method::OpenSimplex => fractal_noise_at_point_3d::<HybridMulti<OpenSimplex>>,
+                    Method::Perlin => fractal_noise_at_point_3d::<HybridMulti<Perlin>>,
+                    Method::PerlinSurflet => {
+                        fractal_noise_at_point_3d::<HybridMulti<PerlinSurflet>>
+                    }
+                    Method::Simplex => fractal_noise_at_point_3d::<HybridMulti<Simplex>>,
+                    Method::SuperSimplex => fractal_noise_at_point_3d::<HybridMulti<SuperSimplex>>,
+                    Method::Value => fractal_noise_at_point_3d::<HybridMulti<Value>>,
+                    Method::Worley => fractal_noise_at_point_3d::<HybridMulti<Worley>>,
+                },
+                FunctionName::RidgedMulti => match method {
+                    Method::OpenSimplex => fractal_noise_at_point_3d::<RidgedMulti<OpenSimplex>>,
+                    Method::Perlin => fractal_noise_at_point_3d::<RidgedMulti<Perlin>>,
+                    Method::PerlinSurflet => {
+                        fractal_noise_at_point_3d::<RidgedMulti<PerlinSurflet>>
+                    }
+                    Method::Simplex => fractal_noise_at_point_3d::<RidgedMulti<Simplex>>,
+                    Method::SuperSimplex => fractal_noise_at_point_3d::<RidgedMulti<SuperSimplex>>,
+                    Method::Value => fractal_noise_at_point_3d::<RidgedMulti<Value>>,
+                    Method::Worley => fractal_noise_at_point_3d::<RidgedMulti<Worley>>,
+                },
+            };
+            noise_at_point_3d(point, seed, scale, offset, function)
+        },
+    )
 }
 
 fn fractal_noise_at_point_3d<T>(

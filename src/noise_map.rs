@@ -1,6 +1,6 @@
 //! Generate noise map
 //! # Example
-//! For configuration, see [`NoiseMap`](./struct.NoiseMap.html)
+//! For configuration, see [`NoiseMap`](struct.NoiseMap.html)
 //! ```
 //! use bevy::prelude::*;
 //! use bevy_generative::noise_map::{NoiseMapBundle, NoiseMapPlugin};
@@ -43,9 +43,11 @@ impl Plugin for NoiseMapPlugin {
 pub struct NoiseMap {
     /// Noise configuration of the noise map
     pub noise: Noise,
+    /// Size of the noise map
     pub size: [u32; 2],
     /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
     pub anti_aliasing: bool,
+    /// If true, exports model in glb format
     pub export: bool,
 }
 
@@ -92,12 +94,12 @@ fn generate_map(
             .colors(&colors)
             .domain(&domain)
             .build()
-            .unwrap_or(
+            .unwrap_or_else(|_| {
                 colorgrad::CustomGradient::new()
                     .colors(&colors)
                     .build()
-                    .expect("Gradient generation failed"),
-            );
+                    .expect("Gradient generation failed")
+            });
 
         if noise.gradient.segments != 0 {
             grad = grad.sharp(noise.gradient.segments, noise.gradient.smoothness);

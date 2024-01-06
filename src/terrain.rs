@@ -1,22 +1,29 @@
 use bevy::{
     prelude::*,
-    render::{
-        render_resource::{PrimitiveTopology, TextureFormat},
-    },
+    render::render_resource::{PrimitiveTopology, TextureFormat},
 };
 use image::Pixel;
 
-use crate::{noise::generate_noise_map, noise::Noise, util::export_terrain};
+use crate::{noise::generate_noise_map, noise::Noise, util::export_model};
 
+/// Component for terrain configuration
 #[derive(Component)]
 pub struct Terrain {
+    /// Noise configuration for terrain
     pub noise: Noise,
-    // Size of the terrain
+    /// Size of the terrain
     pub size: [u32; 2],
+    /// Resolution of terrain
     pub resolution: u32,
+    /// If true, renders terrain mesh as wireframe
     pub wireframe: bool,
+    /// Height values are raised to this value.
+    /// Lower values result in plains, higher values result in mountains
     pub height_exponent: f32,
+    /// Percentage of terrain that should appear under sea
+    /// The mesh below this value will be flat
     pub sea_percent: f32,
+    /// If true, exports model in glb format
     pub export: bool,
 }
 
@@ -34,12 +41,16 @@ impl Default for Terrain {
     }
 }
 
+/// Render `Terrain` as a `PbrBundle`
 #[derive(Bundle, Default)]
 pub struct TerrainBundle {
+    /// Terrain configuration
     pub terrain: Terrain,
+    /// Generated mesh data is written to `PbrBundle`
     pub pbr_bundle: PbrBundle,
 }
 
+/// Plugin to generate terrain
 pub struct TerrainPlugin;
 
 impl Plugin for TerrainPlugin {
@@ -79,12 +90,12 @@ fn generate_terrain(
             .colors(&colors)
             .domain(&domain)
             .build()
-            .unwrap_or(
+            .unwrap_or_else(|_| {
                 colorgrad::CustomGradient::new()
                     .colors(&colors)
                     .build()
-                    .expect("Gradient generation failed"),
-            );
+                    .expect("Gradient generation failed")
+            });
 
         if terrain.noise.gradient.segments != 0 {
             grad = grad.sharp(
@@ -127,17 +138,17 @@ fn generate_terrain(
         let cols = terrain.size[1] * terrain.resolution + 1;
         let width = terrain.size[0] as f32 + 1.0;
         let depth = terrain.size[1] as f32 + 1.0;
-        for i in 0..rows {
-            for j in 0..cols {
-                let i = i as f32;
-                let j = j as f32;
-                let noise_value = noise_values[i as usize][j as usize] as f32;
+        for row in 0..rows {
+            for col in 0..cols {
+                let row = row as f32;
+                let col = col as f32;
+                let noise_value = noise_values[row as usize][col as usize] as f32;
                 let height_value = (0_f32.max(noise_value - terrain.sea_percent)) / 100.0;
-                let x = (i / terrain.resolution as f32 - width / 2.0) + 0.5;
+                let x = (row / terrain.resolution as f32 - width / 2.0) + 0.5;
                 let y = ((height_value * 1.2).powf(terrain.height_exponent) - 0.5) * 2.0;
-                let z = (j / terrain.resolution as f32 - depth / 2.0) + 0.5;
+                let z = (col / terrain.resolution as f32 - depth / 2.0) + 0.5;
 
-                let color = grad.at(noise_values[i as usize][j as usize]);
+                let color = grad.at(noise_values[row as usize][col as usize]);
                 let color = [
                     color.r as f32,
                     color.g as f32,
@@ -147,7 +158,7 @@ fn generate_terrain(
 
                 positions.push([x, y, z]);
                 normals.push([0.0, 1.0, 0.0]);
-                uvs.push([i, j]);
+                uvs.push([row, col]);
                 colors.push(color);
             }
         }
@@ -193,7 +204,7 @@ fn generate_terrain(
         *mesh_handle = meshes.add(mesh);
 
         if terrain.export {
-            export_terrain(positions, indices, colors);
+            export_model(&positions, indices, &colors);
             terrain.export = false;
         }
     }

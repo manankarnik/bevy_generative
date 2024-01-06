@@ -69,8 +69,8 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
     let buffer_length = vertices.len() * mem::size_of::<Vertex>();
     let buffer = json::Buffer {
         byte_length: USize64::from(buffer_length),
-        extensions: Default::default(),
-        extras: Default::default(),
+        extensions: Option::default(),
+        extras: Option::default(),
         name: None,
         uri: if output == Output::Standard {
             Some("buffer0.bin".into())
@@ -83,8 +83,8 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
         byte_length: buffer.byte_length,
         byte_offset: None,
         byte_stride: Some(json::buffer::Stride(mem::size_of::<Vertex>())),
-        extensions: Default::default(),
-        extras: Default::default(),
+        extensions: Option::default(),
+        extras: Option::default(),
         name: None,
         target: Some(Valid(json::buffer::Target::ArrayBuffer)),
     };
@@ -95,8 +95,8 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
         component_type: Valid(json::accessor::GenericComponentType(
             json::accessor::ComponentType::F32,
         )),
-        extensions: Default::default(),
-        extras: Default::default(),
+        extensions: Option::default(),
+        extras: Option::default(),
         type_: Valid(json::accessor::Type::Vec3),
         min: Some(json::Value::from(Vec::from(min))),
         max: Some(json::Value::from(Vec::from(max))),
@@ -111,8 +111,8 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
         component_type: Valid(json::accessor::GenericComponentType(
             json::accessor::ComponentType::F32,
         )),
-        extensions: Default::default(),
-        extras: Default::default(),
+        extensions: Option::default(),
+        extras: Option::default(),
         type_: Valid(json::accessor::Type::Vec3),
         min: None,
         max: None,
@@ -128,8 +128,8 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
             map.insert(Valid(json::mesh::Semantic::Colors(0)), json::Index::new(1));
             map
         },
-        extensions: Default::default(),
-        extras: Default::default(),
+        extensions: Option::default(),
+        extras: Option::default(),
         indices: None,
         material: None,
         mode: Valid(json::mesh::Mode::Triangles),
@@ -137,8 +137,8 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
     };
 
     let mesh = json::Mesh {
-        extensions: Default::default(),
-        extras: Default::default(),
+        extensions: Option::default(),
+        extras: Option::default(),
         name: None,
         primitives: vec![primitive],
         weights: None,
@@ -147,8 +147,8 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
     let node = json::Node {
         camera: None,
         children: None,
-        extensions: Default::default(),
-        extras: Default::default(),
+        extensions: Option::default(),
+        extras: Option::default(),
         matrix: None,
         mesh: Some(json::Index::new(0)),
         name: None,
@@ -166,12 +166,12 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
         meshes: vec![mesh],
         nodes: vec![node],
         scenes: vec![json::Scene {
-            extensions: Default::default(),
-            extras: Default::default(),
+            extensions: Option::default(),
+            extras: Option::default(),
             name: None,
             nodes: vec![json::Index::new(0)],
         }],
-        ..Default::default()
+        ..json::Root::default()
     };
 
     match output {
