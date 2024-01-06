@@ -95,6 +95,10 @@ fn setup(mut commands: Commands) {
 | ---- | --------------- |
 | 0.12 | 0.1.0, main     |
 
+## Contributing
+
+Not accepting pull requests at this time, issues and bug reports are appreciated.
+
 ## License
 
 Dual-licensed under either:
