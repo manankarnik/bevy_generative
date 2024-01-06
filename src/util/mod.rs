@@ -1,6 +1,6 @@
 mod gltf;
 use gltf::{export_gltf, Output, Vertex};
-use image::{codecs::png::PngEncoder, DynamicImage, ImageBuffer, ImageEncoder, Rgba};
+use image::{codecs::png::PngEncoder, save_buffer, DynamicImage, ImageBuffer, ImageEncoder, Rgba};
 #[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
 use wasm_bindgen::prelude::wasm_bindgen;
