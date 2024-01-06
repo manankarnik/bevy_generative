@@ -18,10 +18,10 @@
 
 mod util;
 
+/// Map and texture generation
+pub mod map;
 /// Noise configuration
 pub mod noise;
-/// Map and texture generation
-pub mod noise_map;
 /// Planet generation
 pub mod planet;
 /// Terrain  generation

@@ -1,21 +1,21 @@
-//! Generate noise map
+//! Generate map
 //! # Example
-//! For configuration, see [`NoiseMap`](struct.NoiseMap.html)
+//! For configuration, see [`Map`](struct.Map.html)
 //! ```
 //! use bevy::prelude::*;
-//! use bevy_generative::noise_map::{NoiseMapBundle, NoiseMapPlugin};
+//! use bevy_generative::map::{MapBundle, MapPlugin};
 //!
 //! fn main() {
 //!     App::new()
 //!         .add_plugins(DefaultPlugins)
-//!         .add_plugins(NoiseMapPlugin)
+//!         .add_plugins(MapPlugin)
 //!         .add_systems(Startup, setup)
 //!         .run();
 //! }
 //!
 //! fn setup(mut commands: Commands) {
 //!     commands.spawn(Camera2dBundle::default());
-//!     commands.spawn(NoiseMapBundle::default());
+//!     commands.spawn(MapBundle::default());
 //! }
 //! ```
 use bevy::{
@@ -29,21 +29,21 @@ use crate::{
     util::export_asset,
 };
 
-/// Plugin to generate noise map
-pub struct NoiseMapPlugin;
+/// Plugin to generate map
+pub struct MapPlugin;
 
-impl Plugin for NoiseMapPlugin {
+impl Plugin for MapPlugin {
     fn build(&self, app: &mut App) {
         app.add_systems(Update, generate_map);
     }
 }
 
-/// Component for noise map configuration
+/// Component for map configuration
 #[derive(Component)]
-pub struct NoiseMap {
-    /// Noise configuration of the noise map
+pub struct Map {
+    /// Noise configuration of the map
     pub noise: Noise,
-    /// Size of the noise map
+    /// Size of the map
     pub size: [u32; 2],
     /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
     pub anti_aliasing: bool,
@@ -51,16 +51,16 @@ pub struct NoiseMap {
     pub export: bool,
 }
 
-/// Display `NoiseMap` as a ui node
+/// Display `Map` as a ui node
 #[derive(Bundle, Default)]
-pub struct NoiseMapBundle {
-    /// See [`NoiseMap`](./struct.NoiseMap.html)
-    pub noise_map: NoiseMap,
+pub struct MapBundle {
+    /// See [`Map`](./struct.Map.html)
+    pub map: Map,
     /// See [`ImageBundle`](../../bevy/prelude/struct.ImageBundle.html)
     pub image_bundle: ImageBundle,
 }
 
-impl Default for NoiseMap {
+impl Default for Map {
     fn default() -> Self {
         Self {
             noise: Noise::default(),
@@ -70,10 +70,7 @@ impl Default for NoiseMap {
         }
     }
 }
-fn generate_map(
-    mut images: ResMut<Assets<Image>>,
-    mut query: Query<(&mut UiImage, &mut NoiseMap)>,
-) {
+fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImage, &mut Map)>) {
     for (mut ui_image, mut noise_map) in &mut query {
         noise_map.noise.size = noise_map.size;
         let noise_values = generate_noise_map(&noise_map.noise);
