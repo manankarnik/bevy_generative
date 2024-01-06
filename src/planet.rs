@@ -1,3 +1,30 @@
+//! Generate planet
+//! # Example
+//! For configuration, see [`Planet`](struct.Planet.html)
+//! ```
+//! use bevy::prelude::*;
+//! use bevy_generative::planet::{PlanetBundle, PlanetPlugin};
+//!
+//! fn main() {
+//!     App::new()
+//!         .add_plugins(DefaultPlugins)
+//!         .add_plugins(PlanetPlugin)
+//!         .add_systems(Startup, setup)
+//!         .run();
+//! }
+//!
+//! fn setup(mut commands: Commands) {
+//!     commands.spawn(PointLightBundle {
+//!         transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+//!         ..default()
+//!     });
+//!     commands.spawn(Camera3dBundle {
+//!         transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+//!         ..default()
+//!     });
+//!     commands.spawn(PlanetBundle::default());
+//! }
+//! ```
 use bevy::{
     prelude::{
         App, Assets, Bundle, Component, Handle, Image, Mesh, PbrBundle, Plugin, Query, ResMut,

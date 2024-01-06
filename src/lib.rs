@@ -14,7 +14,7 @@
 #![allow(clippy::similar_names)]
 #![allow(clippy::too_many_lines)]
 
-//! Procedural generation in bevy
+//! Procedural generation in Bevy
 
 mod util;
 
