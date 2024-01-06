@@ -70,7 +70,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
     let buffer = json::Buffer {
         byte_length: USize64::from(buffer_length),
         extensions: Option::default(),
-        extras: Option::default(),
+        extras: Default::default(),
         name: None,
         uri: if output == Output::Standard {
             Some("buffer0.bin".into())
@@ -84,7 +84,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
         byte_offset: None,
         byte_stride: Some(json::buffer::Stride(mem::size_of::<Vertex>())),
         extensions: Option::default(),
-        extras: Option::default(),
+        extras: Default::default(),
         name: None,
         target: Some(Valid(json::buffer::Target::ArrayBuffer)),
     };
@@ -96,7 +96,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
             json::accessor::ComponentType::F32,
         )),
         extensions: Option::default(),
-        extras: Option::default(),
+        extras: Default::default(),
         type_: Valid(json::accessor::Type::Vec3),
         min: Some(json::Value::from(Vec::from(min))),
         max: Some(json::Value::from(Vec::from(max))),
@@ -112,7 +112,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
             json::accessor::ComponentType::F32,
         )),
         extensions: Option::default(),
-        extras: Option::default(),
+        extras: Default::default(),
         type_: Valid(json::accessor::Type::Vec3),
         min: None,
         max: None,
@@ -129,7 +129,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
             map
         },
         extensions: Option::default(),
-        extras: Option::default(),
+        extras: Default::default(),
         indices: None,
         material: None,
         mode: Valid(json::mesh::Mode::Triangles),
@@ -138,7 +138,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
 
     let mesh = json::Mesh {
         extensions: Option::default(),
-        extras: Option::default(),
+        extras: Default::default(),
         name: None,
         primitives: vec![primitive],
         weights: None,
@@ -148,7 +148,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
         camera: None,
         children: None,
         extensions: Option::default(),
-        extras: Option::default(),
+        extras: Default::default(),
         matrix: None,
         mesh: Some(json::Index::new(0)),
         name: None,
@@ -167,7 +167,7 @@ pub fn export_gltf(output: Output, vertices: Vec<Vertex>) {
         nodes: vec![node],
         scenes: vec![json::Scene {
             extensions: Option::default(),
-            extras: Option::default(),
+            extras: Default::default(),
             name: None,
             nodes: vec![json::Index::new(0)],
         }],
