@@ -6,6 +6,7 @@ edition = "2021"
 description = "Procedural generation in Bevy"
 categories = ["game-development", "graphics", "rendering", "visualization"]
 keywords = ["bevy", "gamedev", "procedural", "generation", "graphics"]
+exclude = [".github/**/*"]
 readme = "README.md"
 repository = "https://github.com/manankarnik/bevy_generative"
 homepage = "https://github.com/manankarnik/bevy_generative"
