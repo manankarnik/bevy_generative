@@ -30,11 +30,12 @@ use bevy::{
     render::render_resource::{PrimitiveTopology, TextureFormat},
 };
 use image::Pixel;
+use serde::{Deserialize, Serialize};
 
 use crate::{noise::generate_noise_map, noise::Noise, util::export_model};
 
 /// Component for terrain configuration
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize)]
 pub struct Terrain {
     /// Noise configuration for terrain
     pub noise: Noise,

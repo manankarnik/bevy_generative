@@ -4,9 +4,10 @@ use bevy::prelude::{Handle, Image};
 use noise::{BasicMulti, Billow, Fbm, HybridMulti, RidgedMulti};
 use noise::{MultiFractal, NoiseFn, Seedable};
 use noise::{OpenSimplex, Perlin, PerlinSurflet, Simplex, SuperSimplex, Value, Worley};
+use serde::{Deserialize, Serialize};
 
 /// 2D noise method used to generate noise map
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub enum Method {
     /// Open Simplex noise
     OpenSimplex,
@@ -39,7 +40,7 @@ impl fmt::Display for Method {
 }
 
 /// Fractal function that should be applied on the noise values
-#[derive(PartialEq, Eq)]
+#[derive(PartialEq, Eq, Serialize, Deserialize)]
 pub enum FunctionName {
     /// See [`BasicMulti`](https://docs.rs/noise/latest/noise/struct.BasicMulti.html)
     BasicMulti,
@@ -66,6 +67,7 @@ impl fmt::Display for FunctionName {
 }
 
 /// Fractal function configuration
+#[derive(Serialize, Deserialize)]
 pub struct Function {
     /// Name of the function
     pub name: Option<FunctionName>,
@@ -92,6 +94,7 @@ impl Default for Function {
 }
 
 /// Region based on height
+#[derive(Serialize, Deserialize)]
 pub struct Region {
     /// Label of the region
     pub label: String,
@@ -112,8 +115,10 @@ impl Default for Region {
 }
 
 /// Gradient used to map color values
+#[derive(Serialize, Deserialize)]
 pub struct Gradient {
     /// Image handle of gradient
+    #[serde(skip_serializing, skip_deserializing)]
     pub image: Handle<Image>,
     /// Size of gradient
     pub size: [u32; 2],
@@ -135,6 +140,7 @@ impl Default for Gradient {
 }
 
 /// Noise configuration
+#[derive(Serialize, Deserialize)]
 pub struct Noise {
     pub(crate) size: [u32; 2],
     /// Seed of the noise

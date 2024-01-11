@@ -23,6 +23,7 @@ use bevy::{
     render::{render_resource::TextureFormat, texture::ImageSampler},
 };
 use image::Pixel;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     noise::{generate_noise_map, Noise},
@@ -39,7 +40,7 @@ impl Plugin for MapPlugin {
 }
 
 /// Component for map configuration
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize)]
 pub struct Map {
     /// Noise configuration of the map
     pub noise: Noise,

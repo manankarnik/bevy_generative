@@ -32,8 +32,8 @@ use bevy::{
     },
     render::render_resource::{PrimitiveTopology, TextureFormat},
 };
-
 use image::Pixel;
+use serde::{Deserialize, Serialize};
 
 use crate::{
     noise::{get_noise_at_point_3d, Function, Gradient, Method, Region},
@@ -41,7 +41,7 @@ use crate::{
 };
 
 /// Component for planet configuration
-#[derive(Component)]
+#[derive(Component, Serialize, Deserialize)]
 pub struct Planet {
     /// Seed of the noise
     pub seed: u32,
