@@ -53,6 +53,7 @@ pub struct Terrain {
     /// The mesh below this value will be flat
     pub sea_percent: f32,
     /// If true, exports model in glb format
+    #[serde(skip)]
     pub export: bool,
 }
 

@@ -74,6 +74,7 @@ pub struct Planet {
     /// If true, exports model in glb format
     /// Native: Shows save file dialog.
     /// WASM: Downloads model based on browser configuration.
+    #[serde(skip)]
     pub export: bool,
 }
 

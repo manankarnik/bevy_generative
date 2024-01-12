@@ -48,8 +48,10 @@ pub struct Map {
     /// Size of the map
     pub size: [u32; 2],
     /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
+    #[serde(skip)]
     pub anti_aliasing: bool,
     /// If true, exports model in glb format
+    #[serde(skip)]
     pub export: bool,
 }
 

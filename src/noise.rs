@@ -123,7 +123,7 @@ impl Default for Region {
 #[serde(rename_all = "camelCase")]
 pub struct Gradient {
     /// Image handle of gradient
-    #[serde(skip_serializing, skip_deserializing)]
+    #[serde(skip)]
     pub image: Handle<Image>,
     /// Size of gradient
     pub size: [u32; 2],
