@@ -8,6 +8,7 @@ use serde::{Deserialize, Serialize};
 
 /// 2D noise method used to generate noise map
 #[derive(PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum Method {
     /// Open Simplex noise
     OpenSimplex,
@@ -41,6 +42,7 @@ impl fmt::Display for Method {
 
 /// Fractal function that should be applied on the noise values
 #[derive(PartialEq, Eq, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub enum FunctionName {
     /// See [`BasicMulti`](https://docs.rs/noise/latest/noise/struct.BasicMulti.html)
     BasicMulti,
@@ -68,6 +70,7 @@ impl fmt::Display for FunctionName {
 
 /// Fractal function configuration
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Function {
     /// Name of the function
     pub name: Option<FunctionName>,
@@ -95,6 +98,7 @@ impl Default for Function {
 
 /// Region based on height
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Region {
     /// Label of the region
     pub label: String,
@@ -116,6 +120,7 @@ impl Default for Region {
 
 /// Gradient used to map color values
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Gradient {
     /// Image handle of gradient
     #[serde(skip_serializing, skip_deserializing)]
@@ -141,6 +146,7 @@ impl Default for Gradient {
 
 /// Noise configuration
 #[derive(Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Noise {
     pub(crate) size: [u32; 2],
     /// Seed of the noise

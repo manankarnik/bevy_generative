@@ -41,6 +41,7 @@ impl Plugin for MapPlugin {
 
 /// Component for map configuration
 #[derive(Component, Serialize, Deserialize)]
+#[serde(rename_all = "camelCase")]
 pub struct Map {
     /// Noise configuration of the map
     pub noise: Noise,
