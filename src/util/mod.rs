@@ -3,8 +3,10 @@ use gltf::{export_gltf, Output, Vertex};
 use image::{codecs::png::PngEncoder, save_buffer, DynamicImage, ImageBuffer, ImageEncoder, Rgba};
 #[cfg(not(target_arch = "wasm32"))]
 use rfd::FileDialog;
+#[cfg(target_arch = "wasm32")]
 use wasm_bindgen::prelude::wasm_bindgen;
 
+#[cfg(target_arch = "wasm32")]
 #[wasm_bindgen(module = "/src/util/save.js")]
 extern "C" {
     fn save(data: &[u8], filename: &str, r#type: &str);
@@ -24,6 +26,7 @@ pub fn export_asset(image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>) {
             )
             .expect("Failed to write to png");
 
+        #[cfg(target_arch = "wasm32")]
         save(&png_buffer, "asset.png", "image/png");
     }
     #[cfg(not(target_arch = "wasm32"))]
