@@ -72,11 +72,11 @@ impl Default for Map {
         }
     }
 }
-fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImage, &mut Map)>) {
-    for (mut ui_image, mut noise_map) in &mut query {
-        noise_map.noise.size = noise_map.size;
-        let noise_values = generate_noise_map(&noise_map.noise);
-        let noise = &mut noise_map.noise;
+fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &mut UiImage)>) {
+    for (mut map, mut ui_image) in &mut query {
+        map.noise.size = map.size;
+        let noise_values = generate_noise_map(&map.noise);
+        let noise = &mut map.noise;
 
         let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(noise.regions.len());
         let mut domain: Vec<f64> = Vec::with_capacity(noise.regions.len());
@@ -134,19 +134,19 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut UiImag
             let target_color = grad.at(height).to_rgba8();
             pixel.blend(&image::Rgba(target_color));
         }
-        let mut noise_map_texture = Image::from_dynamic(image_buffer.clone().into(), true)
+        let mut map_texture = Image::from_dynamic(image_buffer.clone().into(), true)
             .convert(TextureFormat::Rgba8UnormSrgb)
             .expect("Could not convert to Rgba8UnormSrgb");
-        noise_map_texture.sampler = if noise_map.anti_aliasing {
+        map_texture.sampler = if map.anti_aliasing {
             ImageSampler::linear()
         } else {
             ImageSampler::nearest()
         };
-        ui_image.texture = images.add(noise_map_texture);
+        ui_image.texture = images.add(map_texture);
 
-        if noise_map.export {
+        if map.export {
             export_asset(image_buffer);
-            noise_map.export = false;
+            map.export = false;
         }
     }
 }
