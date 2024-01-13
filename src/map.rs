@@ -22,7 +22,7 @@ use bevy::{
     prelude::*,
     render::{render_resource::TextureFormat, texture::ImageSampler},
 };
-use image::Pixel;
+use image::{imageops::FilterType, Pixel};
 use serde::{Deserialize, Serialize};
 
 use crate::{
@@ -47,6 +47,10 @@ pub struct Map {
     pub noise: Noise,
     /// Size of the map
     pub size: [u32; 2],
+    /// Size of the image
+    pub image_size: [u32; 2],
+    /// If true, image has the same size as map
+    pub same_size: bool,
     /// If true, `ImageSampler::linear()` is used else `ImageSampler::nearest()`
     #[serde(skip)]
     pub anti_aliasing: bool,
@@ -69,14 +73,26 @@ impl Default for Map {
         Self {
             noise: Noise::default(),
             size: [100; 2],
+            image_size: [100; 2],
+            same_size: true,
             anti_aliasing: true,
             export: false,
         }
     }
 }
-fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &mut UiImage)>) {
-    for (mut map, mut ui_image) in &mut query {
+fn generate_map(
+    mut images: ResMut<Assets<Image>>,
+    mut query: Query<(&mut Map, &mut UiImage, &mut Style)>,
+) {
+    for (mut map, mut ui_image, mut style) in &mut query {
         map.noise.size = map.size;
+        if map.same_size {
+            style.width = Val::Px(map.size[0] as f32);
+            style.height = Val::Px(map.size[1] as f32);
+        } else {
+            style.width = Val::Px(map.image_size[0] as f32);
+            style.height = Val::Px(map.image_size[1] as f32);
+        }
         let noise_values = generate_noise_map(&map.noise);
         let noise = &mut map.noise;
 
@@ -136,7 +152,7 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &
             let target_color = grad.at(height).to_rgba8();
             pixel.blend(&image::Rgba(target_color));
         }
-        let mut map_texture = Image::from_dynamic(image_buffer.clone().into(), true)
+        let mut map_texture = Image::from_dynamic(image_buffer.into(), true)
             .convert(TextureFormat::Rgba8UnormSrgb)
             .expect("Could not convert to Rgba8UnormSrgb");
         map_texture.sampler = if map.anti_aliasing {
@@ -144,10 +160,24 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &
         } else {
             ImageSampler::nearest()
         };
-        ui_image.texture = images.add(map_texture);
+        ui_image.texture = images.add(map_texture.clone());
 
         if map.export {
-            export_asset(image_buffer);
+            export_asset(
+                map_texture
+                    .try_into_dynamic()
+                    .expect("Could not convert to dynamic")
+                    .resize_exact(
+                        map.image_size[0],
+                        map.image_size[1],
+                        if map.anti_aliasing {
+                            FilterType::Triangle
+                        } else {
+                            FilterType::Nearest
+                        },
+                    )
+                    .to_rgba8(),
+            );
             map.export = false;
         }
     }
