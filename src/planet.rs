@@ -42,7 +42,7 @@ use crate::{
 
 /// Component for planet configuration
 #[derive(Component, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct Planet {
     /// Seed of the noise
     pub seed: u32,

@@ -36,7 +36,7 @@ use crate::{noise::generate_noise_map, noise::Noise, util::export_model};
 
 /// Component for terrain configuration
 #[derive(Component, Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct Terrain {
     /// Noise configuration for terrain
     pub noise: Noise,

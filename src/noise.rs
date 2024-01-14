@@ -70,7 +70,7 @@ impl fmt::Display for FunctionName {
 
 /// Fractal function configuration
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct Function {
     /// Name of the function
     pub name: Option<FunctionName>,
@@ -98,7 +98,7 @@ impl Default for Function {
 
 /// Region based on height
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct Region {
     /// Label of the region
     pub label: String,
@@ -120,7 +120,7 @@ impl Default for Region {
 
 /// Gradient used to map color values
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct Gradient {
     /// Image handle of gradient
     #[serde(skip)]
@@ -146,7 +146,7 @@ impl Default for Gradient {
 
 /// Noise configuration
 #[derive(Serialize, Deserialize)]
-#[serde(rename_all = "camelCase")]
+#[serde(default, rename_all = "camelCase")]
 pub struct Noise {
     pub(crate) size: [u32; 2],
     /// Seed of the noise
