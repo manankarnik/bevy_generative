@@ -82,33 +82,28 @@ impl Default for Planet {
     fn default() -> Self {
         Self {
             seed: 0,
-            scale: 1.0,
+            scale: 20.0,
             offset: [0.0; 3],
             method: Method::Perlin,
             function: Function::default(),
-            resolution: 10,
+            resolution: 20,
             regions: vec![
                 Region {
-                    label: "Sand".to_string(),
-                    color: [242, 241, 199, 255],
+                    label: "Region #1".to_string(),
+                    color: [255, 0, 0, 255],
                     position: 0.0,
                 },
                 Region {
-                    label: "Grass".to_string(),
-                    color: [24, 148, 67, 255],
-                    position: 50.0,
-                },
-                Region {
-                    label: "Forest".to_string(),
-                    color: [10, 82, 35, 255],
+                    label: "Region #2".to_string(),
+                    color: [0, 0, 255, 255],
                     position: 100.0,
                 },
             ],
             gradient: Gradient::default(),
             base_color: [255, 255, 255, 255],
             wireframe: false,
-            height_exponent: 1.0,
-            sea_percent: 10.0,
+            height_exponent: 1.5,
+            sea_percent: 50.0,
             export: false,
         }
     }

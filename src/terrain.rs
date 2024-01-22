@@ -62,7 +62,7 @@ impl Default for Terrain {
         Self {
             noise: Noise::default(),
             size: [2; 2],
-            resolution: 10,
+            resolution: 15,
             wireframe: false,
             height_exponent: 1.0,
             sea_percent: 10.0,

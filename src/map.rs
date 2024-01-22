@@ -68,8 +68,8 @@ impl Default for Map {
     fn default() -> Self {
         Self {
             noise: Noise::default(),
-            size: [100; 2],
-            image_size: [100; 2],
+            size: [400; 2],
+            image_size: [400; 2],
             same_size: true,
             anti_aliasing: true,
             export: false,

@@ -138,7 +138,7 @@ impl Default for Gradient {
         Self {
             image: Handle::default(),
             size: [250, 50],
-            segments: 3,
+            segments: 0,
             smoothness: 0.0,
         }
     }
@@ -179,18 +179,13 @@ impl Default for Noise {
             function: Function::default(),
             regions: vec![
                 Region {
-                    label: "Sand".to_string(),
-                    color: [242, 241, 199, 255],
+                    label: "Region #1".to_string(),
+                    color: [255, 0, 0, 255],
                     position: 0.0,
                 },
                 Region {
-                    label: "Grass".to_string(),
-                    color: [24, 148, 67, 255],
-                    position: 50.0,
-                },
-                Region {
-                    label: "Forest".to_string(),
-                    color: [10, 82, 35, 255],
+                    label: "Region #2".to_string(),
+                    color: [0, 0, 255, 255],
                     position: 100.0,
                 },
             ],
