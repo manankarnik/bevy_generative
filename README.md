@@ -17,6 +17,10 @@
 - Allows saving generated assets (uses `rfd` for native, javascript blob for wasm)
 - Serializes and deserializes components using `serde`
 
+## Showcase
+
+Check out [Procedra](https://procedra.netlify.app) [[Source](https://github.com/manankarnik/procedra)], a procedural generation web application that allows you to experiment with all the parameters and generate assets in real-time!
+
 ## Installation
 
 Add `bevy_generative` to your rust project
