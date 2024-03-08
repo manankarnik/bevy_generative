@@ -27,7 +27,10 @@
 //! ```
 use bevy::{
     prelude::*,
-    render::render_resource::{PrimitiveTopology, TextureFormat},
+    render::{
+        render_asset::RenderAssetUsages,
+        render_resource::{PrimitiveTopology, TextureFormat},
+    },
 };
 use image::Pixel;
 use serde::{Deserialize, Serialize};
@@ -148,9 +151,13 @@ fn generate_terrain(
         }
 
         terrain.noise.gradient.image = images.add(
-            Image::from_dynamic(gradient_buffer.into(), true)
-                .convert(TextureFormat::Rgba8UnormSrgb)
-                .expect("Could not convert to Rgba8UnormSrgb"),
+            Image::from_dynamic(
+                gradient_buffer.into(),
+                true,
+                RenderAssetUsages::RENDER_WORLD,
+            )
+            .convert(TextureFormat::Rgba8UnormSrgb)
+            .expect("Could not convert to Rgba8UnormSrgb"),
         );
 
         let vertices_count: usize =
@@ -222,11 +229,14 @@ fn generate_terrain(
         }
 
         let mut mesh = if terrain.wireframe {
-            Mesh::new(PrimitiveTopology::LineList)
+            Mesh::new(PrimitiveTopology::LineList, RenderAssetUsages::RENDER_WORLD)
         } else {
-            Mesh::new(PrimitiveTopology::TriangleList)
+            Mesh::new(
+                PrimitiveTopology::TriangleList,
+                RenderAssetUsages::RENDER_WORLD,
+            )
         };
-        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices.clone())));
+        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices.clone()));
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());

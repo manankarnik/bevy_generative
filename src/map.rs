@@ -18,7 +18,10 @@
 //!     commands.spawn(MapBundle::default());
 //! }
 //! ```
-use bevy::{prelude::*, render::render_resource::TextureFormat};
+use bevy::{
+    prelude::*,
+    render::{render_asset::RenderAssetUsages, render_resource::TextureFormat},
+};
 use image::{imageops::FilterType, DynamicImage, Pixel};
 use serde::{Deserialize, Serialize};
 
@@ -122,9 +125,13 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &
         }
 
         noise.gradient.image = images.add(
-            Image::from_dynamic(gradient_buffer.into(), true)
-                .convert(bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb)
-                .expect("Could not convert to Rgba8UnormSrgb"),
+            Image::from_dynamic(
+                gradient_buffer.into(),
+                true,
+                RenderAssetUsages::RENDER_WORLD,
+            )
+            .convert(bevy::render::render_resource::TextureFormat::Rgba8UnormSrgb)
+            .expect("Could not convert to Rgba8UnormSrgb"),
         );
 
         let mut image_buffer = image::ImageBuffer::from_pixel(
@@ -155,9 +162,10 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &
             export_asset(image_buffer.clone());
             map.export = false;
         }
-        let map_texture = Image::from_dynamic(image_buffer.into(), true)
-            .convert(TextureFormat::Rgba8UnormSrgb)
-            .expect("Could not convert to Rgba8UnormSrgb");
+        let map_texture =
+            Image::from_dynamic(image_buffer.into(), true, RenderAssetUsages::RENDER_WORLD)
+                .convert(TextureFormat::Rgba8UnormSrgb)
+                .expect("Could not convert to Rgba8UnormSrgb");
 
         ui_image.texture = images.add(map_texture);
     }

@@ -30,7 +30,10 @@ use bevy::{
         App, Assets, Bundle, Component, Handle, Image, Mesh, PbrBundle, Plugin, Query, ResMut,
         StandardMaterial, Update, Vec3,
     },
-    render::render_resource::{PrimitiveTopology, TextureFormat},
+    render::{
+        render_asset::RenderAssetUsages,
+        render_resource::{PrimitiveTopology, TextureFormat},
+    },
 };
 use image::Pixel;
 use serde::{Deserialize, Serialize};
@@ -189,11 +192,14 @@ fn generate_planet(
         }
 
         let mut mesh = if planet.wireframe {
-            Mesh::new(PrimitiveTopology::LineList)
+            Mesh::new(PrimitiveTopology::LineList, RenderAssetUsages::RENDER_WORLD)
         } else {
-            Mesh::new(PrimitiveTopology::TriangleList)
+            Mesh::new(
+                PrimitiveTopology::TriangleList,
+                RenderAssetUsages::RENDER_WORLD,
+            )
         };
-        mesh.set_indices(Some(bevy::render::mesh::Indices::U32(indices.clone())));
+        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices.clone()));
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());
@@ -251,9 +257,13 @@ fn generate_gradient(
     }
 
     planet.gradient.image = images.add(
-        Image::from_dynamic(gradient_buffer.into(), true)
-            .convert(TextureFormat::Rgba8UnormSrgb)
-            .expect("Could not convert to Rgba8UnormSrgb"),
+        Image::from_dynamic(
+            gradient_buffer.into(),
+            true,
+            RenderAssetUsages::RENDER_WORLD,
+        )
+        .convert(TextureFormat::Rgba8UnormSrgb)
+        .expect("Could not convert to Rgba8UnormSrgb"),
     );
     grad
 }

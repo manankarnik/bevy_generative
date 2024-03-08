@@ -112,7 +112,8 @@ fn setup(mut commands: Commands) {
 
 | bevy | bevy_generative |
 | ---- | --------------- |
-| 0.12 | 0.1, main       |
+| 0.13 | 0.2, main       |
+| 0.12 | 0.1             |
 
 ## Contributing
 
