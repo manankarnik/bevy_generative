@@ -33,6 +33,8 @@ cargo add bevy_generative
 
 ### Maps and Textures
 
+![map_and_textures](https://github.com/shanecelis/bevy_generative/assets/54390/55e5abda-c4fe-4bf0-be36-a0dc4f5506a1)
+
 ```rust
 use bevy::prelude::*;
 use bevy_generative::map::{MapBundle, MapPlugin};
@@ -53,6 +55,8 @@ fn setup(mut commands: Commands) {
 ```
 
 ### Terrain
+
+![terrain](https://github.com/shanecelis/bevy_generative/assets/54390/2c8c005d-9eaf-4fa2-9ffc-e0e3a6621f8d)
 
 ```rust
 use bevy::prelude::*;
@@ -81,6 +85,8 @@ fn setup(mut commands: Commands) {
 ```
 
 ### Planets
+
+![planets](https://github.com/shanecelis/bevy_generative/assets/54390/14f4827c-4cab-443e-9f87-94e010efb2bd)
 
 ```rust
 use bevy::prelude::*;
