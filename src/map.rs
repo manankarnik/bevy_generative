@@ -1,7 +1,7 @@
 //! Generate map
 //! # Example
 //! For configuration, see [`Map`](struct.Map.html)
-//! ```
+//! ```no_run
 //! use bevy::prelude::*;
 //! use bevy_generative::map::{MapBundle, MapPlugin};
 //!

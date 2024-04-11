@@ -268,7 +268,7 @@ pub(crate) fn generate_noise_map(noise: &Noise) -> Vec<Vec<f64>> {
     )
 }
 
-fn generate_noise<T>(size: [u32; 2], seed: u32, scale: f64, offset: [f64; 2]) -> Vec<Vec<f64>>
+pub(crate) fn generate_noise<T>(size: [u32; 2], seed: u32, scale: f64, offset: [f64; 2]) -> Vec<Vec<f64>>
 where
     T: Default + Seedable + NoiseFn<f64, 2>,
 {
@@ -277,7 +277,7 @@ where
     generate_noise_vector(noise, size, scale, offset)
 }
 
-fn generate_fractal_noise<T>(
+pub(crate) fn generate_fractal_noise<T>(
     size: [u32; 2],
     seed: u32,
     scale: f64,
@@ -296,7 +296,7 @@ where
     generate_noise_vector(noise, size, scale, offset)
 }
 
-fn generate_noise_vector(
+pub(crate) fn generate_noise_vector(
     noise: impl NoiseFn<f64, 2>,
     size: [u32; 2],
     scale: f64,
@@ -304,9 +304,9 @@ fn generate_noise_vector(
 ) -> Vec<Vec<f64>> {
     let mut noise_vector: Vec<Vec<f64>> = Vec::with_capacity(size[0] as usize);
     let noise = noise::Clamp::new(noise).set_bounds(-1.0, 1.0);
-    for i in 0..=size[0] {
+    for i in 0..size[0] {
         let mut row: Vec<f64> = Vec::with_capacity(size[1] as usize);
-        for j in 0..=size[1] {
+        for j in 0..size[1] {
             let x = f64::from(i as i32 - (size[0] / 2) as i32) / scale + offset[0];
             let y = f64::from(j as i32 - (size[1] / 2) as i32) / scale + offset[1];
             let value = (noise.get([x, y]) + 1.0) / 2.0 * 100.0;
@@ -395,7 +395,7 @@ pub(crate) fn get_noise_at_point_3d(
     )
 }
 
-fn fractal_noise_at_point_3d<T>(
+pub(crate) fn fractal_noise_at_point_3d<T>(
     point: [f64; 3],
     seed: u32,
     scale: f64,
@@ -418,7 +418,7 @@ where
     noise.get([x, y, z])
 }
 
-fn noise_at_point_3d<T>(point: [f64; 3], seed: u32, scale: f64, offset: [f64; 3]) -> f64
+pub(crate) fn noise_at_point_3d<T>(point: [f64; 3], seed: u32, scale: f64, offset: [f64; 3]) -> f64
 where
     T: Default + Seedable + NoiseFn<f64, 3>,
 {

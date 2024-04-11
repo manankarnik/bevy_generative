@@ -1,7 +1,7 @@
 //! Generate terrain
 //! # Example
 //! For configuration, see [`Terrain`](struct.Terrain.html)
-//! ```
+//! ```no_run
 //! use bevy::prelude::*;
 //! use bevy_generative::terrain::{TerrainBundle, TerrainPlugin};
 //!

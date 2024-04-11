@@ -27,3 +27,5 @@ pub mod noise;
 pub mod planet;
 /// Terrain  generation
 pub mod terrain;
+
+mod tests;

@@ -1,7 +1,7 @@
 //! Generate planet
 //! # Example
 //! For configuration, see [`Planet`](struct.Planet.html)
-//! ```
+//! ```no_run
 //! use bevy::prelude::*;
 //! use bevy_generative::planet::{PlanetBundle, PlanetPlugin};
 //!
