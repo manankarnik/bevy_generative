@@ -268,7 +268,12 @@ pub(crate) fn generate_noise_map(noise: &Noise) -> Vec<Vec<f64>> {
     )
 }
 
-pub(crate) fn generate_noise<T>(size: [u32; 2], seed: u32, scale: f64, offset: [f64; 2]) -> Vec<Vec<f64>>
+pub(crate) fn generate_noise<T>(
+    size: [u32; 2],
+    seed: u32,
+    scale: f64,
+    offset: [f64; 2],
+) -> Vec<Vec<f64>>
 where
     T: Default + Seedable + NoiseFn<f64, 2>,
 {

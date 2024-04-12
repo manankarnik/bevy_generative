@@ -76,12 +76,8 @@ mod tests {
 
     #[test]
     fn test_noise_at_point_3d() {
-        let noise_value = noise_at_point_3d::<noise::Perlin>(
-            [1.0, 2.0, 3.0],
-            123,
-            0.1,
-            [0.0, 0.0, 0.0],
-        );
+        let noise_value =
+            noise_at_point_3d::<noise::Perlin>([1.0, 2.0, 3.0], 123, 0.1, [0.0, 0.0, 0.0]);
         assert!(noise_value >= -1.0 && noise_value <= 1.0);
     }
 }
