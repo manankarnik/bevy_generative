@@ -171,8 +171,8 @@ fn generate_terrain(
         let mut indices: Vec<u32> = Vec::with_capacity(triangle_count);
         let mut colors: Vec<[f32; 4]> = Vec::with_capacity(vertices_count);
 
-        let rows = terrain.size[0] * terrain.resolution + 1;
-        let cols = terrain.size[1] * terrain.resolution + 1;
+        let rows = terrain.size[0] * terrain.resolution;
+        let cols = terrain.size[1] * terrain.resolution;
         let width = terrain.size[0] as f32 + 1.0;
         let depth = terrain.size[1] as f32 + 1.0;
         for row in 0..rows {

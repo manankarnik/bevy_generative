@@ -24,7 +24,7 @@ pub fn export_asset(image_buffer: ImageBuffer<Rgba<u8>, Vec<u8>>) {
                 &image_buffer,
                 image_buffer.width(),
                 image_buffer.height(),
-                color_type,
+                color_type.into(),
             )
             .expect("Failed to write to png");
 
