@@ -117,7 +117,17 @@ fn setup(mut commands: Commands) {
 
 ## Contributing
 
-Not accepting pull requests at this time. Issues, feature requests and bug reports are appreciated.
+Contributions are welcome! Issues, pull requests, feature requests and bug reports are appreciated. If you'd like to contribute to this project, please follow these steps:
+
+1. Fork the repository.
+2. Create a new branch with a descriptive name.
+3. Make your changes or additions.
+4. Test your changes.
+5. Submit a pull request with a clear description of your work.
+
+Please ensure your code passes all CI checks and includes relevant tests if applicable. Thank you for helping improve `bevy_generative`! 
+
+Your contribution will be dual-licensed as mentioned in the License section below.
 
 ## License
 
