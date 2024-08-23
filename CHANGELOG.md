@@ -1,5 +1,7 @@
 # Changelog
 
+## [v0.3.0](https://github.com/manankarnik/bevy_generative/compare/v0.2.0...v0.3.0) (2024-08-23)
+
 ## [v0.2.0](https://github.com/manankarnik/bevy_generative/compare/v0.1.0...v0.2.0) (2024-03-08)
 
 ### Features
@@ -12,7 +14,7 @@
 ### Fixes
 
 * serde default all structs
-([6829675](https://github.com/manankarnik/bevy_generative/commit/68296753783358721a6dda5ad4b8fdb6f36c55cf))
+([232b697](https://github.com/manankarnik/bevy_generative/commit/232b69782e5567b3e0bab4c09554c984ccbe88cd))
 * wasm-bindgen called on non-wasm targets
 ([3aa437e](https://github.com/manankarnik/bevy_generative/commit/3aa437e72e62a0d42c4c93020a22daed86018f7b))
 
