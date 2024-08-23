@@ -112,7 +112,8 @@ fn setup(mut commands: Commands) {
 
 | bevy | bevy_generative |
 | ---- | --------------- |
-| 0.13 | 0.2, main       |
+| 0.13 | 0.3, main       |
+| 0.13 | 0.2             |
 | 0.12 | 0.1             |
 
 ## Contributing
@@ -125,7 +126,7 @@ Contributions are welcome! Issues, pull requests, feature requests and bug repor
 4. Test your changes.
 5. Submit a pull request with a clear description of your work.
 
-Please ensure your code passes all CI checks and includes relevant tests if applicable. Thank you for helping improve `bevy_generative`! 
+Please ensure your code passes all CI checks and includes relevant tests if applicable. Thank you for helping improve `bevy_generative`!
 
 Your contribution will be dual-licensed as mentioned in the License section below.
 
