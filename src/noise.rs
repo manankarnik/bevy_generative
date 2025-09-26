@@ -103,7 +103,7 @@ pub struct Region {
     /// Label of the region
     pub label: String,
     /// Percentage below which the region should render
-    pub position: f64,
+    pub position: f32,
     /// Color representing the region
     pub color: [u8; 4],
 }

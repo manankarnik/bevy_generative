@@ -10,6 +10,7 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(Camera2dBundle::default());
+    let camera_bundle = (Camera2d::default(),);
+    commands.spawn(camera_bundle);
     commands.spawn(MapBundle::default());
 }

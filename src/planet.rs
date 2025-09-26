@@ -14,27 +14,37 @@
 //! }
 //!
 //! fn setup(mut commands: Commands) {
-//!     commands.spawn(PointLightBundle {
-//!         transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-//!         ..default()
-//!     });
-//!     commands.spawn(Camera3dBundle {
-//!         transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-//!         ..default()
-//!     });
-//!     commands.spawn(PlanetBundle::default());
+//!     let light_bundle = (
+//!        PointLight::default(),
+//!        Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+//!    );
+//!
+//!
+//!    commands.spawn(light_bundle);
+//!
+//!    let camera_bundle = (
+//!        Camera3d::default(),
+//!        Projection::Perspective(PerspectiveProjection::default()),
+//!        Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+//!
+//!    );
+//!    commands.spawn(camera_bundle);
+//!    commands.spawn(PlanetBundle::default());
 //! }
 //! ```
 use bevy::{
+    pbr::MeshMaterial3d,
     prelude::{
-        App, Assets, Bundle, Component, Handle, Image, Mesh, PbrBundle, Plugin, Query, ResMut,
-        StandardMaterial, Update, Vec3,
+        App, Assets, Bundle, Component, Image, Mesh, Plugin, Query, ResMut, StandardMaterial,
+        Update, Vec3,
     },
     render::{
+        mesh::Mesh3d,
         render_asset::RenderAssetUsages,
         render_resource::{PrimitiveTopology, TextureFormat},
     },
 };
+use colorgrad::LinearGradient;
 use image::Pixel;
 use serde::{Deserialize, Serialize};
 
@@ -118,7 +128,7 @@ pub struct PlanetBundle {
     /// Planet configuration
     pub planet: Planet,
     /// Generated mesh data is written to `PbrBundle`
-    pub pbr_bundle: PbrBundle,
+    pub pbr_bundle: (Mesh3d, MeshMaterial3d<StandardMaterial>),
 }
 
 /// Plugin to generate planet
@@ -142,7 +152,7 @@ fn generate_planet(
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&mut Planet, &mut Handle<Mesh>, &Handle<StandardMaterial>)>,
+    mut query: Query<(&mut Planet, &mut Mesh3d, &MeshMaterial3d<StandardMaterial>)>,
 ) {
     for (mut planet, mut mesh_handle, material) in &mut query {
         if let Some(material) = materials.get_mut(material) {
@@ -204,7 +214,7 @@ fn generate_planet(
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-        *mesh_handle = meshes.add(mesh);
+        *mesh_handle = Mesh3d(meshes.add(mesh));
 
         if planet.export {
             export_model(&positions, indices, &colors);
@@ -216,32 +226,28 @@ fn generate_planet(
 fn generate_gradient(
     images: &mut ResMut<Assets<Image>>,
     planet: &mut Planet,
-) -> colorgrad::Gradient {
+) -> colorgrad::LinearGradient {
     let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(planet.regions.len());
-    let mut domain: Vec<f64> = Vec::with_capacity(planet.regions.len());
+    let mut domain: Vec<f32> = Vec::with_capacity(planet.regions.len());
     for region in &planet.regions {
         colors.push(colorgrad::Color {
-            r: f64::from(region.color[0]) / 255.0,
-            g: f64::from(region.color[1]) / 255.0,
-            b: f64::from(region.color[2]) / 255.0,
-            a: f64::from(region.color[3]) / 255.0,
+            r: f32::from(region.color[0]) / 255.0,
+            g: f32::from(region.color[1]) / 255.0,
+            b: f32::from(region.color[2]) / 255.0,
+            a: f32::from(region.color[3]) / 255.0,
         });
         domain.push(region.position);
     }
-    let mut grad = colorgrad::CustomGradient::new()
+    let grad = colorgrad::GradientBuilder::new()
         .colors(&colors)
         .domain(&domain)
-        .build()
+        .build::<LinearGradient>()
         .unwrap_or_else(|_| {
-            colorgrad::CustomGradient::new()
+            colorgrad::GradientBuilder::new()
                 .colors(&colors)
-                .build()
+                .build::<LinearGradient>()
                 .expect("Gradient generation failed")
         });
-
-    if planet.gradient.segments != 0 {
-        grad = grad.sharp(planet.gradient.segments, planet.gradient.smoothness);
-    }
 
     let mut gradient_buffer = image::ImageBuffer::from_pixel(
         planet.gradient.size[0],
@@ -250,9 +256,11 @@ fn generate_gradient(
     );
 
     for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
-        let rgba = grad
-            .at(f64::from(x) * 100.0 / f64::from(planet.gradient.size[0]))
-            .to_rgba8();
+        let rgba = colorgrad::Gradient::at(
+            &grad,
+            (f64::from(x) * 100.0 / f64::from(planet.gradient.size[0])) as f32,
+        )
+        .to_rgba8();
         pixel.blend(&image::Rgba(rgba));
     }
 
@@ -268,7 +276,7 @@ fn generate_gradient(
     grad
 }
 
-fn generate_face(planet: &Planet, local_up: Vec3, grad: &colorgrad::Gradient) -> MeshData {
+fn generate_face(planet: &Planet, local_up: Vec3, grad: &colorgrad::LinearGradient) -> MeshData {
     let axis_a = Vec3::new(local_up.y, local_up.z, local_up.x);
     let axis_b = local_up.cross(axis_a);
     let vertices_count = (planet.resolution * planet.resolution) as usize;
@@ -306,7 +314,7 @@ fn generate_face(planet: &Planet, local_up: Vec3, grad: &colorgrad::Gradient) ->
             let i = x + y * resolution;
             positions.push([vertex.x, vertex.y, vertex.z]);
             normals.push([vertex.x, vertex.y, vertex.z]);
-            let color = grad.at(f64::from(noise_value) * 100.0);
+            let color = colorgrad::Gradient::at(grad, (f64::from(noise_value) * 100.0) as f32);
             let color = [
                 color.r as f32,
                 color.g as f32,

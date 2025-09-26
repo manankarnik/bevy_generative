@@ -14,14 +14,18 @@
 //! }
 //!
 //! fn setup(mut commands: Commands) {
-//!     commands.spawn(Camera2dBundle::default());
-//!     commands.spawn(MapBundle::default());
+//!     let camera_bundle = (
+//!        Camera2d::default(),
+//!    );
+//!    commands.spawn(camera_bundle);
+//!    commands.spawn(MapBundle::default());
 //! }
 //! ```
 use bevy::{
     prelude::*,
     render::{render_asset::RenderAssetUsages, render_resource::TextureFormat},
 };
+use colorgrad::{Gradient, LinearGradient};
 use image::{imageops::FilterType, DynamicImage, Pixel};
 use serde::{Deserialize, Serialize};
 
@@ -64,7 +68,7 @@ pub struct MapBundle {
     /// See [`Map`](./struct.Map.html)
     pub map: Map,
     /// See [`ImageBundle`](../../bevy/prelude/struct.ImageBundle.html)
-    pub image_bundle: ImageBundle,
+    pub image_bundle: ImageNode,
 }
 
 impl Default for Map {
@@ -79,37 +83,33 @@ impl Default for Map {
         }
     }
 }
-fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &mut UiImage)>) {
+fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &mut ImageNode)>) {
     for (mut map, mut ui_image) in &mut query {
         map.noise.size = map.size;
         let noise_values = generate_noise_map(&map.noise);
         let noise = &mut map.noise;
 
         let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(noise.regions.len());
-        let mut domain: Vec<f64> = Vec::with_capacity(noise.regions.len());
+        let mut domain: Vec<f32> = Vec::with_capacity(noise.regions.len());
         for region in &noise.regions {
             colors.push(colorgrad::Color {
-                r: f64::from(region.color[0]) / 255.0,
-                g: f64::from(region.color[1]) / 255.0,
-                b: f64::from(region.color[2]) / 255.0,
-                a: f64::from(region.color[3]) / 255.0,
+                r: f32::from(region.color[0]) / 255.0,
+                g: f32::from(region.color[1]) / 255.0,
+                b: f32::from(region.color[2]) / 255.0,
+                a: f32::from(region.color[3]) / 255.0,
             });
             domain.push(region.position);
         }
-        let mut grad = colorgrad::CustomGradient::new()
+        let grad = colorgrad::GradientBuilder::new()
             .colors(&colors)
             .domain(&domain)
-            .build()
+            .build::<LinearGradient>()
             .unwrap_or_else(|_| {
-                colorgrad::CustomGradient::new()
+                colorgrad::GradientBuilder::new()
                     .colors(&colors)
-                    .build()
+                    .build::<LinearGradient>()
                     .expect("Gradient generation failed")
             });
-
-        if noise.gradient.segments != 0 {
-            grad = grad.sharp(noise.gradient.segments, noise.gradient.smoothness);
-        }
 
         let mut gradient_buffer = image::ImageBuffer::from_pixel(
             noise.gradient.size[0],
@@ -119,7 +119,7 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &
 
         for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
             let rgba = grad
-                .at(f64::from(x) * 100.0 / f64::from(noise.gradient.size[0]))
+                .at((f64::from(x) * 100.0 / f64::from(noise.gradient.size[0])) as f32)
                 .to_rgba8();
             pixel.blend(&image::Rgba(rgba));
         }
@@ -142,7 +142,7 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &
 
         for (x, y, pixel) in image_buffer.enumerate_pixels_mut() {
             let height = noise_values[x as usize][y as usize];
-            let target_color = grad.at(height).to_rgba8();
+            let target_color = grad.at(height as f32).to_rgba8();
             pixel.blend(&image::Rgba(target_color));
         }
         if !map.same_size {
@@ -167,6 +167,6 @@ fn generate_map(mut images: ResMut<Assets<Image>>, mut query: Query<(&mut Map, &
                 .convert(TextureFormat::Rgba8UnormSrgb)
                 .expect("Could not convert to Rgba8UnormSrgb");
 
-        ui_image.texture = images.add(map_texture);
+        ui_image.image = images.add(map_texture);
     }
 }

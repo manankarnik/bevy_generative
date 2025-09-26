@@ -14,15 +14,28 @@
 //! }
 //!
 //! fn setup(mut commands: Commands) {
-//!     commands.spawn(PointLightBundle {
-//!         transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-//!         ..default()
-//!     });
-//!     commands.spawn(Camera3dBundle {
-//!         transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-//!         ..default()
-//!     });
-//!     commands.spawn(TerrainBundle::default());
+//!     let light_bundle = (
+//!        PointLight::default(),
+//!        Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+//!    );
+//!
+//!
+//!    commands.spawn(light_bundle);
+//!
+//!    let camera_bundle = (
+//!        Camera3d::default(),
+//!        Projection::Perspective(PerspectiveProjection::default()),
+//!        Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+//!
+//!    );
+//!    commands.spawn(camera_bundle);
+//!    commands.spawn(TerrainBundle {
+//!        terrain: bevy_generative::terrain::Terrain {
+//!            resolution: 4,
+//!            ..default()
+//!        },
+//!        ..default()
+//!    });
 //! }
 //! ```
 use bevy::{
@@ -32,6 +45,7 @@ use bevy::{
         render_resource::{PrimitiveTopology, TextureFormat},
     },
 };
+use colorgrad::LinearGradient;
 use image::Pixel;
 use serde::{Deserialize, Serialize};
 
@@ -80,7 +94,7 @@ pub struct TerrainBundle {
     /// Terrain configuration
     pub terrain: Terrain,
     /// Generated mesh data is written to `PbrBundle`
-    pub pbr_bundle: PbrBundle,
+    pub pbr_bundle: (Mesh3d, MeshMaterial3d<StandardMaterial>),
 }
 
 /// Plugin to generate terrain
@@ -96,7 +110,7 @@ fn generate_terrain(
     mut images: ResMut<Assets<Image>>,
     mut materials: ResMut<Assets<StandardMaterial>>,
     mut meshes: ResMut<Assets<Mesh>>,
-    mut query: Query<(&mut Terrain, &mut Handle<Mesh>, &Handle<StandardMaterial>)>,
+    mut query: Query<(&mut Terrain, &mut Mesh3d, &MeshMaterial3d<StandardMaterial>)>,
 ) {
     for (mut terrain, mut mesh_handle, material) in &mut query {
         if let Some(material) = materials.get_mut(material) {
@@ -109,33 +123,26 @@ fn generate_terrain(
         let noise_values = generate_noise_map(&terrain.noise);
 
         let mut colors: Vec<colorgrad::Color> = Vec::with_capacity(terrain.noise.regions.len());
-        let mut domain: Vec<f64> = Vec::with_capacity(terrain.noise.regions.len());
+        let mut domain: Vec<f32> = Vec::with_capacity(terrain.noise.regions.len());
         for region in &terrain.noise.regions {
             colors.push(colorgrad::Color {
-                r: f64::from(region.color[0]) / 255.0,
-                g: f64::from(region.color[1]) / 255.0,
-                b: f64::from(region.color[2]) / 255.0,
-                a: f64::from(region.color[3]) / 255.0,
+                r: f32::from(region.color[0]) / 255.0,
+                g: f32::from(region.color[1]) / 255.0,
+                b: f32::from(region.color[2]) / 255.0,
+                a: f32::from(region.color[3]) / 255.0,
             });
             domain.push(region.position);
         }
-        let mut grad = colorgrad::CustomGradient::new()
+        let grad = colorgrad::GradientBuilder::new()
             .colors(&colors)
             .domain(&domain)
-            .build()
+            .build::<LinearGradient>()
             .unwrap_or_else(|_| {
-                colorgrad::CustomGradient::new()
+                colorgrad::GradientBuilder::new()
                     .colors(&colors)
-                    .build()
+                    .build::<LinearGradient>()
                     .expect("Gradient generation failed")
             });
-
-        if terrain.noise.gradient.segments != 0 {
-            grad = grad.sharp(
-                terrain.noise.gradient.segments,
-                terrain.noise.gradient.smoothness,
-            );
-        }
 
         let mut gradient_buffer = image::ImageBuffer::from_pixel(
             terrain.noise.gradient.size[0],
@@ -144,9 +151,11 @@ fn generate_terrain(
         );
 
         for (x, _, pixel) in gradient_buffer.enumerate_pixels_mut() {
-            let rgba = grad
-                .at(f64::from(x) * 100.0 / f64::from(terrain.noise.gradient.size[0]))
-                .to_rgba8();
+            let rgba = colorgrad::Gradient::at(
+                &grad,
+                (f64::from(x) * 100.0 / f64::from(terrain.noise.gradient.size[0])) as f32,
+            )
+            .to_rgba8();
             pixel.blend(&image::Rgba(rgba));
         }
 
@@ -185,7 +194,10 @@ fn generate_terrain(
                 let y = ((height_value * 1.2).powf(terrain.height_exponent) - 0.5) * 2.0;
                 let z = (col / terrain.resolution as f32 - depth / 2.0) + 0.5;
 
-                let color = grad.at(noise_values[row as usize][col as usize]);
+                let color = colorgrad::Gradient::at(
+                    &grad,
+                    (noise_values[row as usize][col as usize]) as f32,
+                );
                 let color = [
                     color.r as f32,
                     color.g as f32,
@@ -241,7 +253,7 @@ fn generate_terrain(
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_UV_0, uvs);
-        *mesh_handle = meshes.add(mesh);
+        *mesh_handle = Mesh3d(meshes.add(mesh));
 
         if terrain.export {
             export_model(&positions, indices, &colors);

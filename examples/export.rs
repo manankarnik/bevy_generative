@@ -11,39 +11,47 @@ fn main() {
 }
 
 fn setup(mut commands: Commands) {
-    commands.spawn(PointLightBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
-    commands.spawn(Camera3dBundle {
-        transform: Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
-        ..default()
-    });
+    let light_bundle = (
+        PointLight::default(),
+        Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+    );
+
+    commands.spawn(light_bundle);
+
+    let camera_bundle = (
+        Camera3d::default(),
+        Projection::Perspective(PerspectiveProjection::default()),
+        Transform::from_xyz(-2.0, 2.5, 5.0).looking_at(Vec3::ZERO, Vec3::Y),
+    );
+    commands.spawn(camera_bundle);
+
     commands.spawn(TerrainBundle::default());
 
-    commands
-        .spawn(ButtonBundle {
-            style: Style {
-                padding: UiRect::all(Val::Px(12.)),
-                justify_content: JustifyContent::Center,
-                align_items: AlignItems::Center,
-                margin: UiRect::all(Val::Px(12.)),
-                ..default()
-            },
-            border_radius: BorderRadius::all(Val::Px(5.)),
-            background_color: NORMAL_BUTTON.into(),
+    let button_bundle = (
+        Button,
+        Node {
+            padding: UiRect::all(Val::Px(12.)),
+            justify_content: JustifyContent::Center,
+            align_items: AlignItems::Center,
+            margin: UiRect::all(Val::Px(12.)),
             ..default()
-        })
-        .with_children(|parent| {
-            parent.spawn(TextBundle::from_section(
-                "Export",
-                TextStyle {
-                    font_size: 30.0,
-                    color: BUTTON_TEXT.into(),
-                    ..default()
-                },
-            ));
-        });
+        },
+        BorderRadius::all(Val::Px(5.)),
+        BackgroundColor(NORMAL_BUTTON.into()),
+    );
+
+    commands.spawn(button_bundle).with_children(|parent| {
+        let text_bundle = (
+            Text::from("Export"),
+            TextFont {
+                font_size: 30.0,
+                ..Default::default()
+            },
+            TextColor(BUTTON_TEXT.into()),
+        );
+
+        parent.spawn(text_bundle);
+    });
 }
 
 fn export_button(
