@@ -39,11 +39,7 @@
 //! }
 //! ```
 use bevy::{
-    prelude::*,
-    render::{
-        render_asset::RenderAssetUsages,
-        render_resource::{PrimitiveTopology, TextureFormat},
-    },
+    asset::RenderAssetUsages, mesh::Indices, prelude::*, render::render_resource::{PrimitiveTopology, TextureFormat}
 };
 use colorgrad::LinearGradient;
 use image::Pixel;
@@ -248,7 +244,7 @@ fn generate_terrain(
                 RenderAssetUsages::RENDER_WORLD,
             )
         };
-        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices.clone()));
+        mesh.insert_indices(Indices::U32(indices.clone()));
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());

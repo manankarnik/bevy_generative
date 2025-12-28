@@ -33,16 +33,10 @@
 //! }
 //! ```
 use bevy::{
-    pbr::MeshMaterial3d,
-    prelude::{
+    asset::RenderAssetUsages, mesh::{Indices, Mesh3d}, pbr::MeshMaterial3d, prelude::{
         App, Assets, Bundle, Component, Image, Mesh, Plugin, Query, ResMut, StandardMaterial,
         Update, Vec3,
-    },
-    render::{
-        mesh::Mesh3d,
-        render_asset::RenderAssetUsages,
-        render_resource::{PrimitiveTopology, TextureFormat},
-    },
+    }, render::render_resource::{PrimitiveTopology, TextureFormat}
 };
 use colorgrad::LinearGradient;
 use image::Pixel;
@@ -209,7 +203,7 @@ fn generate_planet(
                 RenderAssetUsages::RENDER_WORLD,
             )
         };
-        mesh.insert_indices(bevy::render::mesh::Indices::U32(indices.clone()));
+        mesh.insert_indices(Indices::U32(indices.clone()));
         mesh.insert_attribute(Mesh::ATTRIBUTE_POSITION, positions.clone());
         mesh.insert_attribute(Mesh::ATTRIBUTE_NORMAL, normals);
         mesh.insert_attribute(Mesh::ATTRIBUTE_COLOR, colors.clone());
